@@ -39,6 +39,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
 
+PROJECT_APPS = [
+    "apps.users",
+    "apps.assessments",
+    "apps.criteria",
+    "apps.candidates",
+    "apps.events",
+    "apps.reports",
+]
+
+INSTALLED_APPS += PROJECT_APPS
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -135,3 +146,5 @@ MEDIA_ROOT = BASE_DIR / "media/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "users.User"
