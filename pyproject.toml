@@ -20,7 +20,10 @@ dependencies = [
     "gunicorn (>=25.3.0,<26.0.0)",
     "psycopg2-binary (>=2.9.11,<3.0.0)",
     "colorama (>=0.4.6,<0.5.0)",
-    "django-filter (>=25.2,<26.0)"
+    "django-filter (>=25.2,<26.0)",
+    "pydantic (>=2.12.5,<3.0.0)",
+    "google-genai (>=1.70.0,<2.0.0)",
+    "groq (>=1.1.2,<2.0.0)"
 ]
 
 [dependency-groups]

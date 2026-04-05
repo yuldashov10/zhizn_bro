@@ -176,3 +176,43 @@ REST_FRAMEWORK = {
     ],
     "EXCEPTION_HANDLER": "core.exceptions.handlers.custom_exception_handler",
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/django.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+        },
+        "ai": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "apps": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}

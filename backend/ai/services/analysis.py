@@ -1,0 +1,180 @@
+import logging
+
+from ai.provider.base import BaseAIProvider, EventAnalysisResult
+from ai.provider.gemini import GeminiProvider
+from ai.provider.groq import GroqProvider
+from core.exceptions.base import ProviderError
+from decouple import config
+
+from apps.criteria.models import Criterion, HardStop
+from apps.events.models import AIProviderLog, Event, EventCriterionScore
+from apps.users.models import User
+
+PROVIDERS: dict[str, type[BaseAIProvider]] = {
+    "gemini": GeminiProvider,
+    "groq": GroqProvider,
+}
+
+logger = logging.getLogger("ai")
+
+
+def get_provider() -> BaseAIProvider:
+    """Возвращает активный AI провайдер из настроек."""
+    provider_name = config("AI_PROVIDER", default="gemini")
+    provider_class = PROVIDERS.get(provider_name)
+    if not provider_class:
+        raise ProviderError(f"Неизвестный AI провайдер: {provider_name}")
+    return provider_class()
+
+
+class AIAnalysisService:
+    """
+    Сервис AI анализа событий.
+    Связывает AI провайдера с бизнес-логикой приложения.
+    """
+
+    @classmethod
+    def analyze(cls, event: Event) -> Event:
+        """
+        Анализирует событие через AI провайдера.
+        Сохраняет результат в БД и логирует токены.
+        """
+        user = event.candidate.user
+        provider = get_provider()
+
+        user_context = cls._build_user_context(user)
+        criteria = cls._get_active_criteria(user)
+        hard_stops = cls._get_active_hard_stops(user)
+
+        try:
+            result, tokens_used = provider.analyze_event(
+                raw_text=event.raw_text,
+                user_context=user_context,
+                criteria=[c.name for c in criteria],
+                hard_stops=[h.name for h in hard_stops],
+            )
+        except ProviderError:
+            logger.error(f"Не удалось проанализировать событие {event.pk}")
+            raise
+
+        cls._save_result(event, result, criteria, hard_stops)
+        cls._log_request(event, result, tokens_used)
+
+        return event
+
+    @classmethod
+    def _build_user_context(cls, user: User) -> dict:
+        """Строит контекст пользователя для промпта."""
+        profile = getattr(user, "profile", None)
+        return {
+            "attachment_type": (
+                profile.get_attachment_type_display()
+                if profile and profile.attachment_type
+                else "не определён"
+            ),
+            "correction_coefficient": (
+                profile.correction_coefficient if profile else 1.0
+            ),
+        }
+
+    @classmethod
+    def _get_active_criteria(cls, user: User) -> list[Criterion]:
+        """Возвращает активные критерии пользователя."""
+        from django.db.models import Q
+
+        return list(
+            Criterion.objects.filter(
+                Q(is_default=True) | Q(user=user),
+                is_active=True,
+            )
+        )
+
+    @classmethod
+    def _get_active_hard_stops(cls, user: User) -> list[HardStop]:
+        """Возвращает активные Hard Stops пользователя."""
+        from django.db.models import Q
+
+        return list(
+            HardStop.objects.filter(
+                Q(is_default=True) | Q(user=user),
+                is_active=True,
+            )
+        )
+
+    @classmethod
+    def _save_result(
+        cls,
+        event: Event,
+        result: EventAnalysisResult,
+        criteria: list[Criterion],
+        hard_stops: list[HardStop],
+    ) -> None:
+        """Сохраняет результат анализа в БД."""
+        criteria_map = {c.name.lower(): c for c in criteria}
+
+        for score in result.scores:
+            criterion = criteria_map.get(score.criterion_name.lower())
+            if not criterion:
+                logger.warning(
+                    f"Критерий '{score.criterion_name}' не найден в БД"
+                )
+                continue
+
+            EventCriterionScore.objects.update_or_create(
+                event=event,
+                criterion=criterion,
+                defaults={
+                    "ai_score": score.score,
+                    "is_confirmed": False,
+                },
+            )
+
+        # Проверяем Hard Stop через БД (не доверяем только ИИ)
+        is_hard_stop = False
+        if result.is_hard_stop and result.hard_stop_name:
+            hard_stop = next(
+                (
+                    h
+                    for h in hard_stops
+                    if h.name.lower() == result.hard_stop_name.lower()
+                ),
+                None,
+            )
+            if hard_stop:
+                is_hard_stop = True
+                from apps.candidates.models import CandidateHardStopLog
+
+                CandidateHardStopLog.objects.create(
+                    candidate=event.candidate,
+                    hard_stop=hard_stop,
+                    note=event.raw_text,
+                )
+                event.candidate.hard_stop_triggered = True
+                event.candidate.save(update_fields=["hard_stop_triggered"])
+
+        event.ai_interpretation = result.interpretation
+        event.bias_warning = result.bias_warning
+        event.is_hard_stop = is_hard_stop
+        event.save(
+            update_fields=[
+                "ai_interpretation",
+                "bias_warning",
+                "is_hard_stop",
+            ]
+        )
+
+    @classmethod
+    def _log_request(
+        cls,
+        event: Event,
+        result: EventAnalysisResult,
+        tokens_used: int = 0,
+    ) -> None:
+        """Логирует запрос к AI провайдеру."""
+        AIProviderLog.objects.create(
+            event=event,
+            provider=config("AI_PROVIDER", default="groq"),
+            prompt=event.raw_text,
+            response=result.interpretation,
+            tokens_used=tokens_used,
+        )
