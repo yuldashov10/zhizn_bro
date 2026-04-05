@@ -4,6 +4,8 @@ from api.v1.events.serializers import (
     EventDetailSerializer,
     EventSerializer,
 )
+from core.filters import EventFilter
+from core.pagination import StandardPagination
 from core.throttling import AIRateThrottle
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -16,7 +18,9 @@ from apps.events.models import Event, EventCriterionScore
 
 
 class EventListView(APIView):
-    """Список событий кандидата."""
+    """Список событий с фильтрацией и пагинацией."""
+
+    pagination_class = StandardPagination
 
     def get(self, request: Request) -> Response:
         candidate_id = request.query_params.get("candidate")
@@ -31,9 +35,26 @@ class EventListView(APIView):
             pk=candidate_id,
             user=request.user,
         )
+
         events = Event.objects.filter(candidate=candidate)
-        serializer = EventSerializer(events, many=True)
-        return Response(serializer.data)
+
+        # Фильтрация
+        filterset = EventFilter(request.GET, queryset=events)
+        if not filterset.is_valid():
+            return Response(
+                filterset.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Сортировка
+        ordering = request.query_params.get("ordering", "-created_at")
+        queryset = filterset.qs.order_by(ordering)
+
+        # Пагинация
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = EventSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request: Request) -> Response:
         serializer = EventCreateSerializer(data=request.data)
@@ -47,10 +68,6 @@ class EventListView(APIView):
             )
 
         event = serializer.save()
-
-        # TODO: запустить AI анализ (реализуем в feature/ai-provider)
-        # AIAnalysisService.analyze(event)
-
         return Response(
             EventDetailSerializer(event).data,
             status=status.HTTP_201_CREATED,
