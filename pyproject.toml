@@ -107,3 +107,17 @@ use_parentheses = true
 known_local_folder = [
     "apps",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "backend.settings"
+pythonpath = ["backend"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=apps",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "-v",
+]
