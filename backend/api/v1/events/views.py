@@ -1,9 +1,11 @@
+from ai import AIAnalysisService
 from api.v1.events.serializers import (
     EventCreateSerializer,
     EventCriterionScoreConfirmSerializer,
     EventDetailSerializer,
     EventSerializer,
 )
+from core.exceptions.base import ProviderError
 from core.filters import EventFilter
 from core.pagination import StandardPagination
 from core.throttling import AIRateThrottle
@@ -68,6 +70,15 @@ class EventListView(APIView):
             )
 
         event = serializer.save()
+
+        try:
+            AIAnalysisService.analyze(event)
+        except ProviderError:
+            return Response(
+                {"detail": "Ошибка AI анализа. Попробуйте позже."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         return Response(
             EventDetailSerializer(event).data,
             status=status.HTTP_201_CREATED,
