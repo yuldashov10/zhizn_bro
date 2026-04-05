@@ -151,4 +151,8 @@ class CandidateHardStopLog(models.Model):
         ordering = ["-triggered_at"]
 
     def __str__(self) -> str:
-        return f"{self.candidate} | {self.hard_stop} [{self.triggered_at:%d.%m.%Y}]"
+        return (
+            f"{self.candidate} "
+            f"| {self.hard_stop} "
+            f"[{self.triggered_at:%d.%m.%Y}]"
+        )

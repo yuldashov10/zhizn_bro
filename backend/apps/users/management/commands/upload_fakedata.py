@@ -133,7 +133,9 @@ class Command(BaseCommand):
         test, _ = AttachmentTest.objects.get_or_create(
             name="Краткий тест привязанности",
             defaults={
-                "description": "Краткий тест для определения типа привязанности",
+                "description": (
+                    "Краткий тест для " "определения типа привязанности"
+                ),
                 "is_validated": False,
                 "is_active": True,
             },

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from colorama import Fore, Style, init
 
-
 from ._constants import LOG_FILE_BACKUP_COUNT, LOG_FILE_MAX_BYTES, LOG_LEVEL
 
 init(autoreset=True)
@@ -12,10 +11,10 @@ init(autoreset=True)
 
 class ColoredFormatter(logging.Formatter):
     COLORS = {
-        logging.DEBUG:    Fore.CYAN,
-        logging.INFO:     Fore.GREEN,
-        logging.WARNING:  Fore.YELLOW,
-        logging.ERROR:    Fore.RED,
+        logging.DEBUG: Fore.CYAN,
+        logging.INFO: Fore.GREEN,
+        logging.WARNING: Fore.YELLOW,
+        logging.ERROR: Fore.RED,
         logging.CRITICAL: Fore.RED + Style.BRIGHT,
     }
 
@@ -57,19 +56,23 @@ class ProjectLogger:
             backupCount=LOG_FILE_BACKUP_COUNT,
             encoding="utf-8",
         )
-        handler.setFormatter(logging.Formatter(
-            "%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
         return handler
 
     @staticmethod
     def _set_colored_stream_handler(logger: logging.Logger) -> None:
         handler = logging.StreamHandler()
-        handler.setFormatter(ColoredFormatter(
-            "%(asctime)s [%(levelname)s] %(message)s",
-            datefmt="%H:%M:%S",
-        ))
+        handler.setFormatter(
+            ColoredFormatter(
+                "%(asctime)s [%(levelname)s] %(message)s",
+                datefmt="%H:%M:%S",
+            )
+        )
         logger.addHandler(handler)
 
     @staticmethod

@@ -12,7 +12,7 @@ class UserManager(BaseUserManager):
         telegram_id: int,
         username: str | None = None,
         **extra_fields,
-    ) -> "User":
+    ):
         """Создаёт и сохраняет обычного пользователя."""
         if not telegram_id:
             raise ValueError("Telegram ID обязателен")
@@ -32,7 +32,7 @@ class UserManager(BaseUserManager):
         username: str | None = None,
         password: str | None = None,
         **extra_fields,
-    ) -> "User":
+    ):
         """Создаёт и сохраняет суперпользователя."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
