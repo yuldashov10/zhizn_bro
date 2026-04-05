@@ -149,4 +149,8 @@ class AIProviderLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"[{self.provider}] {self.created_at:%d.%m.%Y %H:%M} | {self.tokens_used} токенов"
+        return (
+            f"[{self.provider}] "
+            f"{self.created_at:%d.%m.%Y %H:%M} "
+            f"| {self.tokens_used} токенов"
+        )

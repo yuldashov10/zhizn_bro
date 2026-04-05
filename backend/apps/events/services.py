@@ -89,5 +89,7 @@ class ScoringService:
         Нормализует взвешенную сумму в диапазон 0–100.
         weighted_sum=-2 → 0, weighted_sum=0 → 50, weighted_sum=+2 → 100
         """
-        normalized = (weighted_sum / cls.MAX_SCORE) * cls.NORMALIZED_MID + cls.NORMALIZED_MID
+        normalized = (
+            weighted_sum / cls.MAX_SCORE
+        ) * cls.NORMALIZED_MID + cls.NORMALIZED_MID
         return int(max(0, min(100, round(normalized))))
