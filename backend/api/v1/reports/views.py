@@ -2,6 +2,8 @@ from api.v1.reports.serializers import (
     ReportGenerateSerializer,
     ReportLogSerializer,
 )
+from core.filters import ReportFilter
+from core.pagination import SmallPagination
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.request import Request
@@ -13,12 +15,24 @@ from apps.reports.models import ReportLog
 
 
 class ReportListView(APIView):
-    """История отчётов текущего пользователя."""
+    """История отчётов с фильтрацией и пагинацией."""
+
+    pagination_class = SmallPagination
 
     def get(self, request: Request) -> Response:
         reports = ReportLog.objects.filter(user=request.user)
-        serializer = ReportLogSerializer(reports, many=True)
-        return Response(serializer.data)
+
+        filterset = ReportFilter(request.GET, queryset=reports)
+        if not filterset.is_valid():
+            return Response(
+                filterset.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(filterset.qs, request)
+        serializer = ReportLogSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ReportGenerateView(APIView):

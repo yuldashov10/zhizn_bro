@@ -5,8 +5,12 @@ from api.v1.candidates.serializers import (
     CandidateStatusHistorySerializer,
     CandidateStatusUpdateSerializer,
 )
+from core.filters import CandidateFilter
+from core.pagination import StandardPagination
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
+from rest_framework.filters import OrderingFilter
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,13 +23,32 @@ from apps.events.services import ScoringService
 class CandidateListView(APIView):
     """Список кандидатов текущего пользователя."""
 
+    pagination_class = StandardPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = CandidateFilter
+    ordering_fields = ["created_at", "name", "age"]
+    ordering = ["-created_at"]
+
     def get(self, request: Request) -> Response:
-        candidates = Candidate.objects.filter(
-            user=request.user,
-            is_active=True,
-        )
-        serializer = CandidateSerializer(candidates, many=True)
-        return Response(serializer.data)
+        candidates = Candidate.objects.filter(user=request.user)
+
+        # Фильтрация
+        filterset = CandidateFilter(request.GET, queryset=candidates)
+        if not filterset.is_valid():
+            return Response(
+                filterset.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Сортировка
+        ordering = request.query_params.get("ordering", "-created_at")
+        queryset = filterset.qs.order_by(ordering)
+
+        # Пагинация
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = CandidateSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request: Request) -> Response:
         serializer = CandidateSerializer(data=request.data)
