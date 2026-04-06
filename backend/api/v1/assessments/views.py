@@ -4,6 +4,7 @@ from api.v1.assessments.serializers import (
     UserAnswerSerializer,
     UserTestSessionSerializer,
 )
+from core.pagination import StandardPagination
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -18,10 +19,14 @@ from apps.users.models import UserProfile
 class AttachmentTestListView(APIView):
     """Список доступных тестов привязанности."""
 
+    pagination_class = StandardPagination
+
     def get(self, request: Request) -> Response:
         tests = AttachmentTest.objects.filter(is_active=True)
-        serializer = AttachmentTestSerializer(tests, many=True)
-        return Response(serializer.data)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(tests, request)
+        serializer = AttachmentTestSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class AttachmentTestDetailView(APIView):

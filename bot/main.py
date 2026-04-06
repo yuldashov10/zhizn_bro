@@ -1,16 +1,23 @@
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from core.logger import ProjectLogger
 from decouple import config
 
-from bot.handlers import assessments, cancel, candidates, events, start
+from bot.handlers import (
+    assessments,
+    cancel,
+    candidates,
+    events,
+    settings,
+    start,
+)
 from bot.middlewares.auth import AuthMiddleware
 
-logger = ProjectLogger.get_logger("bot", "logs/bot.log")
+logger = logging.getLogger("bot")
 
 
 async def main() -> None:
@@ -21,16 +28,15 @@ async def main() -> None:
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
-    # Регистрируем middleware
     dp.message.middleware(AuthMiddleware())
     dp.callback_query.middleware(AuthMiddleware())
 
-    # Регистрируем роутеры
     dp.include_router(cancel.router)
     dp.include_router(start.router)
     dp.include_router(candidates.router)
     dp.include_router(events.router)
     dp.include_router(assessments.router)
+    dp.include_router(settings.router)
 
     logger.info("Бот запущен")
 

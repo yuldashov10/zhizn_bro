@@ -109,6 +109,7 @@ class GroqProvider(BaseAIProvider):
         """
         try:
             data = json.loads(text)
+            logger.debug(f"Ответ Groq: {data}")
             schema = EventAnalysisSchema(**data)
 
             return EventAnalysisResult(

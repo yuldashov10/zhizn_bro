@@ -107,7 +107,9 @@ class BROApiClient:
     async def get_tests(self) -> list[dict]:
         """Получить список тестов привязанности."""
         data = await self._request("GET", "assessments/tests/")
-        return data.get("results", data)
+        if isinstance(data, list):
+            return data
+        return data.get("results", [])
 
     async def get_test(self, test_id: int) -> dict:
         """Получить детали теста."""

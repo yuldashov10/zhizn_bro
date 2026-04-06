@@ -5,12 +5,18 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from bot.client.api import APIError, BROApiClient
-from bot.keyboards.inline import get_answer_keyboard, get_tests_inline
+from bot.keyboards.inline import (
+    get_answer_keyboard,
+    get_attachment_result_keyboard,
+    get_attachment_type_keyboard,
+    get_tests_inline,
+)
 from bot.keyboards.reply import get_main_menu
 from bot.messages.ru import (
     ERROR_GENERAL,
     TEST_CHOOSE,
-    TEST_COMPLETED,
+    TEST_CHOOSE_MANUAL,
+    TEST_CONFIRM_RESULT,
     TEST_QUESTION,
 )
 from bot.states.fsm import AssessmentStates
@@ -26,6 +32,7 @@ async def assessment_start(
     api: BROApiClient,
 ) -> None:
     """Показывает список доступных тестов."""
+    logger.debug(f"Тест привязанности нажат: {message.from_user.id}")
     try:
         tests = await api.get_tests()
         if not tests:
@@ -78,7 +85,6 @@ async def answer_handler(
     state: FSMContext,
     api: BROApiClient,
 ) -> None:
-    """Обрабатывает ответ на вопрос теста."""
     answer = int(callback.data.split(":")[1])
     data = await state.get_data()
     question = data["questions"][data["current_question"]]
@@ -93,15 +99,20 @@ async def answer_handler(
         await state.update_data(current_question=next_index)
 
         if session.get("is_completed"):
-            result = session.get("result_type_display", "Не определён")
-            await state.clear()
+            result = session.get("result_type", "secure")
+            result_display = session.get("result_type_display", "Надёжный")
+
+            await state.update_data(attachment_result=result)
+            await state.set_state(AssessmentStates.confirming_result)
+
             await callback.message.answer(
-                TEST_COMPLETED.format(result=result),
-                reply_markup=get_main_menu(),
+                TEST_CONFIRM_RESULT.format(result=result_display),
+                reply_markup=get_attachment_result_keyboard(result),
                 parse_mode="HTML",
             )
         else:
             await _show_question(callback.message, state)
+
     except APIError:
         await callback.message.answer(ERROR_GENERAL)
     finally:
@@ -127,3 +138,83 @@ async def _show_question(
         reply_markup=get_answer_keyboard(),
         parse_mode="HTML",
     )
+
+
+@router.callback_query(
+    AssessmentStates.confirming_result,
+    F.data.startswith("attachment:confirm:"),
+)
+async def attachment_confirm_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+    api: BROApiClient,
+) -> None:
+    """Пользователь согласен с результатом теста."""
+    result = callback.data.split(":")[2]
+    try:
+        await api.update_me(
+            attachment_type=result,
+            attachment_source="bot_test",
+        )
+        await state.clear()
+        await callback.message.answer(
+            f"✅ Тип привязанности <b>{_get_display(result)}</b> сохранён!",
+            reply_markup=get_main_menu(),
+            parse_mode="HTML",
+        )
+    except APIError:
+        await callback.message.answer(ERROR_GENERAL)
+    finally:
+        await callback.answer()
+
+
+@router.callback_query(
+    AssessmentStates.confirming_result,
+    F.data == "attachment:manual",
+)
+async def attachment_manual_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    """Пользователь хочет выбрать тип вручную."""
+    await callback.message.answer(
+        TEST_CHOOSE_MANUAL,
+        reply_markup=get_attachment_type_keyboard(),
+    )
+    await callback.answer()
+
+
+def _get_display(attachment_type: str) -> str:
+    """Возвращает читаемое название типа привязанности."""
+    types = {
+        "secure": "Надёжный",
+        "anxious": "Тревожный",
+        "avoidant": "Избегающий",
+        "disorganized": "Дезорганизованный",
+    }
+    return types.get(attachment_type, attachment_type)
+
+
+@router.callback_query(F.data.startswith("attachment:set:"))
+async def attachment_set_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+    api: BROApiClient,
+) -> None:
+    """Пользователь выбрал тип привязанности вручную."""
+    result = callback.data.split(":")[2]
+    try:
+        await api.update_me(
+            attachment_type=result,
+            attachment_source="user_defined",
+        )
+        await state.clear()
+        await callback.message.answer(
+            f"✅ Тип привязанности <b>{_get_display(result)}</b> сохранён!",
+            reply_markup=get_main_menu(),
+            parse_mode="HTML",
+        )
+    except APIError:
+        await callback.message.answer(ERROR_GENERAL)
+    finally:
+        await callback.answer()

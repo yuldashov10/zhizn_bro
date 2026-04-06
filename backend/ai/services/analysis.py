@@ -5,6 +5,7 @@ from ai.provider.gemini import GeminiProvider
 from ai.provider.groq import GroqProvider
 from core.exceptions.base import ProviderError
 from decouple import config
+from django.db import models
 
 from apps.criteria.models import Criterion, HardStop
 from apps.events.models import AIProviderLog, Event, EventCriterionScore
@@ -177,4 +178,13 @@ class AIAnalysisService:
             prompt=event.raw_text,
             response=result.interpretation,
             tokens_used=tokens_used,
+        )
+
+        from apps.users.models import UserTokenLimit
+
+        UserTokenLimit.objects.filter(
+            user=event.candidate.user,
+        ).update(
+            used_today=models.F("used_today") + tokens_used,
+            used_this_month=models.F("used_this_month") + tokens_used,
         )

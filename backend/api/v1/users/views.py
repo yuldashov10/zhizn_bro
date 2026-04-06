@@ -21,6 +21,7 @@ class TelegramAuthView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = []
 
     def post(self, request: Request) -> Response:
         serializer = TelegramAuthSerializer(data=request.data)
@@ -63,13 +64,26 @@ class MeView(APIView):
         return Response(serializer.data)
 
     def patch(self, request: Request) -> Response:
-        serializer = UserUpdateSerializer(
+        user_serializer = UserUpdateSerializer(
             request.user,
             data=request.data,
             partial=True,
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user_serializer.is_valid(raise_exception=True)
+        user_serializer.save()
+
+        attachment_type = request.data.get("attachment_type")
+        attachment_source = request.data.get("attachment_source")
+
+        if attachment_type:
+            from apps.users.models import UserProfile
+
+            UserProfile.objects.filter(user=request.user).update(
+                attachment_type=attachment_type,
+                attachment_source=attachment_source
+                or UserProfile.AttachmentSource.USER_DEFINED,
+            )
+
         return Response(UserSerializer(request.user).data)
 
 
