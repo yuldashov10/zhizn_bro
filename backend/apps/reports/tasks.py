@@ -10,11 +10,12 @@ logger = logging.getLogger("apps.reports")
 
 
 @shared_task
-def generate_report_task(report_id: int) -> None:
-    """Асинхронная генерация отчёта через Celery."""
+def generate_report_task(
+    report_id: int, photo_bytes: bytes | None = None
+) -> None:
     try:
         report = ReportLog.objects.get(pk=report_id)
-        ReportService.generate(report)
+        ReportService.generate(report, photo_bytes=photo_bytes)
     except ReportLog.DoesNotExist:
         logger.error(f"ReportLog {report_id} не найден")
     except Exception as e:

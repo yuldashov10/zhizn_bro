@@ -10,6 +10,9 @@ from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     HRFlowable,
+)
+from reportlab.platypus import Image as RLImage
+from reportlab.platypus import (
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -105,7 +108,9 @@ def _on_page(canvas, doc) -> None:
     canvas.restoreState()
 
 
-def generate_pdf(candidate: Candidate) -> bytes:  # noqa: skip
+def generate_pdf(  # noqa: skip
+    candidate: Candidate, photo_bytes: bytes | None = None
+) -> bytes:
     """
     Генерирует PDF отчёт по кандидату.
     Возвращает байты PDF файла.
@@ -187,15 +192,82 @@ def generate_pdf(candidate: Candidate) -> bytes:  # noqa: skip
         )
 
     # ── Заголовок ────────────────────────────────────────────────────────
-    story += [
-        SP(4),
-        P(f"Отчёт: {candidate.name}", "title"),
-        P(
-            f"Пользователь: @{candidate.user.username or candidate.user.telegram_id}",  # noqa: skip
-            "subtitle",
-        ),
-        HR(),
-    ]
+    story.append(SP(4))
+
+    if photo_bytes:
+        try:
+            # Создаём круглое фото через Pillow
+            from PIL import Image as PILImage
+
+            pil_img = PILImage.open(io.BytesIO(photo_bytes)).convert("RGBA")
+            size = 80
+            pil_img = pil_img.resize((size, size), PILImage.LANCZOS)
+
+            # Круглая маска
+            from PIL import ImageDraw as PILDraw
+
+            mask = PILImage.new("L", (size, size), 0)
+            mask_draw = PILDraw.Draw(mask)
+            mask_draw.ellipse([0, 0, size, size], fill=255)
+            result = PILImage.new("RGBA", (size, size), (255, 255, 255, 0))
+            result.paste(pil_img, (0, 0), mask)
+
+            # Сохраняем в буфер
+            img_buffer = io.BytesIO()
+            result.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            # Вставляем в PDF через таблицу (фото слева, текст справа)
+            rl_img = RLImage(img_buffer, width=22 * mm, height=22 * mm)
+            header_data = [
+                [
+                    rl_img,
+                    [
+                        P(f"Отчёт: {candidate.name}", "title"),
+                        P(
+                            f"Пользователь: @{candidate.user.username or candidate.user.telegram_id}",  # noqa: skip
+                            "subtitle",
+                        ),
+                    ],
+                ]
+            ]
+            t_header = Table(header_data, colWidths=[26 * mm, 144 * mm])
+            t_header.setStyle(
+                TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ]
+                )
+            )
+            story.append(t_header)
+        except Exception as e:
+            import logging
+
+            logging.getLogger("apps.reports").warning(
+                f"Ошибка вставки фото в PDF: {e}"
+            )
+            # Fallback без фото
+            story += [
+                P(f"Отчёт: {candidate.name}", "title"),
+                P(
+                    f"Пользователь: @{candidate.user.username or candidate.user.telegram_id}",  # noqa: skip
+                    "subtitle",
+                ),
+            ]
+    else:
+        story += [
+            P(f"Отчёт: {candidate.name}", "title"),
+            P(
+                f"Пользователь: @{candidate.user.username or candidate.user.telegram_id}",  # noqa: skip
+                "subtitle",
+            ),
+        ]
+
+    story.append(HR())
 
     # ── Основная информация ───────────────────────────────────────────────
     story.append(P("Основная информация", "h1"))
