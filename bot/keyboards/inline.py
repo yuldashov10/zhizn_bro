@@ -167,3 +167,40 @@ def get_answer_keyboard() -> InlineKeyboardMarkup:
             )
         )
     return builder.as_markup()
+
+
+def get_attachment_result_keyboard(result: str) -> InlineKeyboardMarkup:
+    """Подтверждение или ручной выбор типа привязанности."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="✅ Согласен",
+            callback_data=f"attachment:confirm:{result}",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="✏️ Указать свой вариант",
+            callback_data="attachment:manual",
+        )
+    )
+    return builder.as_markup()
+
+
+def get_attachment_type_keyboard() -> InlineKeyboardMarkup:
+    """Ручной выбор типа привязанности."""
+    types = [
+        ("🟢 Надёжный", "secure"),
+        ("😰 Тревожный", "anxious"),
+        ("🧊 Избегающий", "avoidant"),
+        ("🌀 Дезорганизованный", "disorganized"),
+    ]
+    builder = InlineKeyboardBuilder()
+    for label, value in types:
+        builder.row(
+            InlineKeyboardButton(
+                text=label,
+                callback_data=f"attachment:set:{value}",
+            )
+        )
+    return builder.as_markup()

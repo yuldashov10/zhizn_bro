@@ -50,6 +50,32 @@ async def add_event_start(
         await message.answer(ERROR_GENERAL)
 
 
+@router.callback_query(F.data.startswith("event:add:"))
+async def add_event_from_candidate(
+    callback: CallbackQuery,
+    state: FSMContext,
+    api: BROApiClient,
+) -> None:
+    """Добавить событие из карточки кандидата."""
+    candidate_id = int(callback.data.split(":")[2])
+    try:
+        candidate = await api.get_candidate(candidate_id)
+        await state.set_state(EventStates.waiting_for_text)
+        await state.update_data(
+            candidate_id=candidate_id,
+            candidate_name=candidate["name"],
+        )
+        await callback.message.answer(
+            EVENT_TEXT_REQUEST,
+            reply_markup=get_cancel_keyboard(),
+            parse_mode="HTML",
+        )
+    except APIError:
+        await callback.message.answer(ERROR_GENERAL)
+    finally:
+        await callback.answer()
+
+
 @router.callback_query(
     EventStates.waiting_for_candidate,
     F.data.startswith("candidate:"),

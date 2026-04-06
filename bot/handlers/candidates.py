@@ -5,7 +5,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from bot.client.api import APIError, BROApiClient
-from bot.keyboards.inline import get_candidate_actions, get_candidates_inline
+from bot.keyboards.inline import (
+    get_candidate_actions,
+    get_candidates_inline,
+    get_status_keyboard,
+)
 from bot.keyboards.reply import (
     get_cancel_keyboard,
     get_confirm_keyboard,
@@ -27,10 +31,23 @@ from bot.messages.ru import (
     SCORE_NO_EVENTS,
     SCORE_RESULT,
 )
-from bot.states.fsm import CandidateStates
+from bot.states.fsm import CandidateStates, CandidateStatusStates
 
 logger = logging.getLogger("bot")
 router = Router()
+
+
+@router.message(F.text == "👤 Кандидаты")
+async def candidates_menu_handler(
+    message: Message,
+) -> None:
+    """Открывает меню кандидатов."""
+    from bot.keyboards.reply import get_candidates_menu
+
+    await message.answer(
+        "Управление кандидатами:",
+        reply_markup=get_candidates_menu(),
+    )
 
 
 # ── Список кандидатов ───────────────────────────────────────────────────────
@@ -84,6 +101,37 @@ async def candidate_score_handler(
         await callback.answer()
 
 
+@router.callback_query(F.data.startswith("candidate:history:"))
+async def candidate_history_handler(
+    callback: CallbackQuery,
+    api: BROApiClient,
+) -> None:
+    """Показывает историю статусов кандидата."""
+    candidate_id = int(callback.data.split(":")[2])
+    try:
+        history = await api.get_status_history(candidate_id)
+        if not history:
+            await callback.message.answer("История статусов пуста.")
+            await callback.answer()
+            return
+
+        lines = ["📋 <b>История статусов:</b>\n"]
+        for item in history:
+            lines.append(
+                f"• {item['status_display']} — "
+                f"{item['started_at'][:10]}"
+                + (f"\n  <i>{item['note']}</i>" if item.get("note") else "")
+            )
+        await callback.message.answer(
+            "\n".join(lines),
+            parse_mode="HTML",
+        )
+    except APIError:
+        await callback.message.answer(ERROR_GENERAL)
+    finally:
+        await callback.answer()
+
+
 @router.callback_query(F.data.startswith("candidate:archive:"))
 async def candidate_archive_handler(
     callback: CallbackQuery,
@@ -103,7 +151,94 @@ async def candidate_archive_handler(
         await callback.answer()
 
 
-@router.callback_query(F.data.startswith("candidate:"))
+@router.callback_query(F.data.startswith("candidate:status:"))
+async def candidate_status_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    """Открывает меню смены статуса."""
+    candidate_id = int(callback.data.split(":")[2])
+    await state.set_state(CandidateStatusStates.choosing_status)
+    await state.update_data(candidate_id=candidate_id)
+    await callback.message.answer(
+        "Выбери новый статус:",
+        reply_markup=get_status_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(
+    CandidateStatusStates.choosing_status,
+    F.data.startswith("status:"),
+)
+async def status_selected_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+    api: BROApiClient,
+) -> None:
+    """Обрабатывает выбор нового статуса."""
+    status = callback.data.split(":")[1]
+    data = await state.get_data()
+    candidate_id = data["candidate_id"]  # noqa: skip
+
+    await state.set_state(CandidateStatusStates.waiting_for_note)
+    await state.update_data(status=status)
+
+    await callback.message.answer(
+        "Добавь примечание к смене статуса (или нажми «Пропустить»):",
+        reply_markup=get_skip_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.message(CandidateStatusStates.waiting_for_note)
+async def status_note_handler(
+    message: Message,
+    state: FSMContext,
+    api: BROApiClient,
+) -> None:
+    """Сохраняет новый статус с примечанием."""
+    if message.text == "❌ Отмена":
+        await state.clear()
+        await message.answer(CANCEL, reply_markup=get_main_menu())
+        return
+
+    note = "" if message.text == "⏭ Пропустить" else message.text.strip()
+    data = await state.get_data()
+
+    try:
+        await api.update_status(
+            candidate_id=data["candidate_id"],
+            status=data["status"],
+            note=note,
+        )
+        await state.clear()
+
+        status_display = {
+            "meeting": "Знакомство",
+            "dating": "Встречаемся",
+            "serious": "Серьёзно",
+            "pause": "Пауза",
+            "ended": "Завершено",
+        }.get(data["status"], data["status"])
+
+        await message.answer(
+            f"✅ Статус изменён на <b>{status_display}</b>",
+            reply_markup=get_main_menu(),
+            parse_mode="HTML",
+        )
+    except APIError:
+        await message.answer(ERROR_GENERAL, reply_markup=get_main_menu())
+        await state.clear()
+
+
+@router.callback_query(
+    F.data.startswith("candidate:")
+    & ~F.data.contains(":score:")
+    & ~F.data.contains(":archive:")
+    & ~F.data.contains(":history:")
+    & ~F.data.contains(":status:")
+)
 async def candidate_detail_handler(
     callback: CallbackQuery,
     api: BROApiClient,
@@ -270,6 +405,17 @@ async def candidate_confirm_handler(
 
 
 # ── Вспомогательные функции ─────────────────────────────────────────────────
+
+
+@router.message(F.text == "🔙 Назад")
+async def back_handler(
+    message: Message,
+) -> None:
+    """Возврат в главное меню."""
+    await message.answer(
+        "Главное меню:",
+        reply_markup=get_main_menu(),
+    )
 
 
 async def _cancel(message: Message, state: FSMContext) -> None:
