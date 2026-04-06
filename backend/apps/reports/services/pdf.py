@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     HRFlowable,
@@ -18,24 +19,44 @@ from reportlab.platypus import (
 
 from apps.candidates.models import Candidate
 from apps.events.services import ScoringService
+from apps.reports.services.fonts import (
+    FONT_BOLD,
+    FONT_BOLD_ITALIC,
+    FONT_ITALIC,
+    FONT_MONO,
+    FONT_NORMAL,
+)
 
-FONT_DIR = "/usr/share/fonts/truetype/dejavu/"
 
-
-def _register_fonts() -> None:
+def _register_fonts() -> bool:
+    """
+    Регистрирует шрифты DejaVu для поддержки кириллицы.
+    Возвращает True если успешно.
+    """
     try:
-        pdfmetrics.registerFont(TTFont("DVSans", FONT_DIR + "DejaVuSans.ttf"))
-        pdfmetrics.registerFont(
-            TTFont("DVSans-Bold", FONT_DIR + "DejaVuSans-Bold.ttf")
+        pdfmetrics.registerFont(TTFont("DVSans", FONT_NORMAL))
+        pdfmetrics.registerFont(TTFont("DVSans-Bold", FONT_BOLD))
+        pdfmetrics.registerFont(TTFont("DVMono", FONT_MONO))
+        pdfmetrics.registerFont(TTFont("DVSans-Italic", FONT_ITALIC))
+        pdfmetrics.registerFont(TTFont("DVSans-BoldItalic", FONT_BOLD_ITALIC))
+        registerFontFamily(
+            "DVSans",
+            normal="DVSans",
+            bold="DVSans-Bold",
+            italic="DVSans-Italic",
+            boldItalic="DVSans-BoldItalic",
         )
-        pdfmetrics.registerFont(
-            TTFont("DVMono", FONT_DIR + "DejaVuSansMono.ttf")
+        return True
+    except Exception as e:
+        import logging
+
+        logging.getLogger("apps.reports").error(
+            f"Ошибка регистрации шрифтов: {e}"
         )
-    except Exception:
-        pass
+        return False
 
 
-_register_fonts()
+_FONTS_REGISTERED = _register_fonts()
 
 PURPLE = colors.HexColor("#534AB7")
 TEAL = colors.HexColor("#0F6E56")
