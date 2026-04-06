@@ -9,3 +9,9 @@ clean:
 
 project_tree:
 	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"
+
+celery:
+	cd backend && poetry run celery -A backend worker --loglevel=info
+
+celery-beat:
+	cd backend && poetry run celery -A backend beat --loglevel=info

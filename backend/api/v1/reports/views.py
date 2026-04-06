@@ -12,6 +12,8 @@ from rest_framework.views import APIView
 
 from apps.candidates.models import Candidate
 from apps.reports.models import ReportLog
+from apps.reports.services.report import ReportService
+from apps.reports.tasks import generate_report_task
 
 
 class ReportListView(APIView):
@@ -36,15 +38,12 @@ class ReportListView(APIView):
 
 
 class ReportGenerateView(APIView):
-    """Сгенерировать отчёт."""
-
     def post(self, request: Request) -> Response:
         serializer = ReportGenerateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         candidate = None
         candidate_id = serializer.validated_data.get("candidate_id")
-
         if candidate_id:
             candidate = get_object_or_404(
                 Candidate,
@@ -52,17 +51,28 @@ class ReportGenerateView(APIView):
                 user=request.user,
             )
 
+        report_type = serializer.validated_data["report_type"]
         report = ReportLog.objects.create(
             user=request.user,
             candidate=candidate,
-            report_type=serializer.validated_data["report_type"],
+            report_type=report_type,
             trigger=ReportLog.Trigger.MANUAL,
         )
 
-        # TODO: запустить генерацию файла (реализуем в feature/reports)
-        # ReportService.generate(report)
-
-        return Response(
-            ReportLogSerializer(report).data,
-            status=status.HTTP_201_CREATED,
-        )
+        if report_type == ReportLog.ReportType.TEXT:
+            # Текстовый отчёт генерируем сразу
+            text = ReportService.generate_text_report(candidate)
+            return Response(
+                {
+                    "report": ReportLogSerializer(report).data,
+                    "text": text,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            # Файловые отчёты — через Celery
+            generate_report_task.delay(report.pk)
+            return Response(
+                ReportLogSerializer(report).data,
+                status=status.HTTP_201_CREATED,
+            )
