@@ -41,10 +41,6 @@ class ReportLogSerializer(serializers.ModelSerializer):
 class ReportGenerateSerializer(serializers.Serializer):
     """Сериализатор запроса на генерацию отчёта."""
 
-    candidate_id = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-    )
-    report_type = serializers.ChoiceField(
-        choices=ReportLog.ReportType.choices,
-    )
+    candidate_id = serializers.IntegerField(required=False, allow_null=True)
+    report_type = serializers.ChoiceField(choices=ReportLog.ReportType.choices)
+    photo_b64 = serializers.CharField(required=False, allow_null=True)

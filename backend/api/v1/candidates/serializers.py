@@ -75,6 +75,7 @@ class CandidateSerializer(serializers.ModelSerializer):
             "name",
             "age",
             "photo",
+            "telegram_photo_id",
             "met_at",
             "is_active",
             "hard_stop_triggered",

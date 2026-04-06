@@ -357,15 +357,22 @@ async def candidate_photo_handler(
         await _cancel(message, state)
         return
 
-    await state.update_data(has_photo=bool(message.photo))
+    telegram_photo_id = None
+    if message.photo:
+        # Берём самое большое фото (последнее в списке)
+        telegram_photo_id = message.photo[-1].file_id
+
+    await state.update_data(telegram_photo_id=telegram_photo_id)
     await state.set_state(CandidateStates.confirming)
 
     data = await state.get_data()
+    has_photo = telegram_photo_id is not None
     text = (
         f"📋 <b>Проверь данные:</b>\n\n"
         f"Имя: <b>{data['name']}</b>\n"
         f"Возраст: {data.get('age') or '—'}\n"
         f"Познакомились: {data.get('met_at') or '—'}\n"
+        f"Фото: {'✅ Есть' if has_photo else '—'}\n"
     )
     await message.answer(
         text,
@@ -393,6 +400,7 @@ async def candidate_confirm_handler(
             name=data["name"],
             age=data.get("age"),
             met_at=data.get("met_at") or "",
+            telegram_photo_id=data.get("telegram_photo_id"),
         )
         await state.clear()
         await message.answer(

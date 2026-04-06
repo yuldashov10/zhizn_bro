@@ -57,16 +57,14 @@ async def report_candidate_selected(
 
 
 @router.callback_query(F.data.startswith("report:"))
-async def report_type_selected(
+async def report_type_selected(  # noqa: skip
     callback: CallbackQuery,
     api: BROApiClient,
 ) -> None:
-    """Генерирует отчёт выбранного типа."""
     parts = callback.data.split(":")
     report_type = parts[1]
     candidate_id = int(parts[2])
 
-    # Получаем имя кандидата
     try:
         candidate = await api.get_candidate(candidate_id)
         candidate_name = candidate["name"]
@@ -76,22 +74,45 @@ async def report_type_selected(
 
     generating_msg = await callback.message.answer(REPORT_GENERATING)
 
+    photo_bytes = None
+    telegram_photo_id = candidate.get("telegram_photo_id")
+    if telegram_photo_id and report_type in ("png", "pdf"):
+        photo_bytes = await api.get_telegram_photo(
+            bot=callback.bot,
+            file_id=telegram_photo_id,
+        )
+
     try:
         response = await api.generate_report(
             report_type=report_type,
             candidate_id=candidate_id,
+            photo_bytes=photo_bytes,
         )
-
         await generating_msg.delete()
 
-        # Текстовый отчёт
+        # Текстовый отчёт — отправляем фото + текст
         if report_type == "text":
             text = response.get("text", "")
-            await callback.message.answer(text, parse_mode="HTML")
+            telegram_photo_id = candidate.get("telegram_photo_id")
+
+            if telegram_photo_id:
+                # Отправляем фото с текстом как подпись
+                try:
+                    await callback.message.answer_photo(
+                        photo=telegram_photo_id,
+                        caption=text,
+                        parse_mode="HTML",
+                    )
+                except Exception:
+                    # Если фото недоступно — просто текст
+                    await callback.message.answer(text, parse_mode="HTML")
+            else:
+                await callback.message.answer(text, parse_mode="HTML")
+
             await callback.answer()
             return
 
-        # Файловые отчёты — ждём Celery
+        # Файловые отчёты
         report_id = response.get("id")
         file_url = None
 

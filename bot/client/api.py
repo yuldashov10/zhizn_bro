@@ -278,12 +278,39 @@ class BROApiClient:
         self,
         report_type: str,
         candidate_id: int | None = None,
+        photo_bytes: bytes | None = None,
     ) -> dict:
         """Сгенерировать отчёт."""
+        import base64
+
         payload = {"report_type": report_type}
         if candidate_id:
             payload["candidate_id"] = candidate_id
+        if photo_bytes:
+            # Передаём фото как base64 строку
+            payload["photo_b64"] = base64.b64encode(photo_bytes).decode()
         return await self._request("POST", "reports/generate/", json=payload)
+
+    async def get_telegram_photo(
+        self,
+        bot,
+        file_id: str,
+    ) -> bytes | None:
+        """
+        Скачивает фото из Telegram по file_id.
+        Возвращает байты изображения.
+        """
+        try:
+            file = await bot.get_file(file_id)
+            buffer = await bot.download_file(file.file_path)
+            return buffer.read()
+        except Exception as e:
+            import logging
+
+            logging.getLogger("bot").error(
+                f"Ошибка скачивания фото {file_id}: {e}"
+            )
+            return None
 
     async def get_report(self, report_id: int) -> dict:
         """Получить детали отчёта по ID."""

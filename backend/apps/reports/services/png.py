@@ -28,12 +28,30 @@ def _load_fonts():
         }
 
 
-def generate_png(candidate: Candidate) -> bytes:
+def _make_circle_avatar(image_bytes: bytes, size: int = 80) -> Image.Image:
+    """Создаёт круглый аватар из байтов изображения."""
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    img = img.resize((size, size), Image.LANCZOS)
+
+    # Создаём круглую маску
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse([0, 0, size, size], fill=255)
+
+    # Применяем маску
+    result = Image.new("RGBA", (size, size), (255, 255, 255, 0))
+    result.paste(img, (0, 0), mask)
+    return result
+
+
+def generate_png(  # noqa: skip
+    candidate: Candidate, photo_bytes: bytes | None = None
+) -> bytes:
     """
     Генерирует PNG дашборд по кандидату.
     Возвращает байты PNG файла.
     """
-    W, H = 900, 580  # увеличиваем размер
+    W, H = 900, 580
     img = Image.new("RGB", (W, H), color="#FFFFFF")
     draw = ImageDraw.Draw(img)
 
@@ -49,9 +67,25 @@ def generate_png(candidate: Candidate) -> bytes:
     draw.text((20, 18), "Жизнь БРО", font=font_title, fill="#FFFFFF")
     draw.text((W - 220, 20), "@zhizn_bro_bot", font=font_body, fill="#EEEDFE")
 
-    # Имя кандидата
-    draw.text((20, 80), candidate.name, font=font_title, fill="#2C2C2A")
+    # Аватар если есть фото
+    avatar_size = 80
+    name_x = 20
+    if photo_bytes:
+        try:
+            avatar = _make_circle_avatar(photo_bytes, avatar_size)
+            # Конвертируем основное изображение в RGBA для вставки аватара
+            img_rgba = img.convert("RGBA")
+            img_rgba.paste(avatar, (20, 75), avatar)
+            img = img_rgba.convert("RGB")
+            draw = ImageDraw.Draw(img)
+            name_x = avatar_size + 30  # сдвигаем имя вправо
+        except Exception:
+            pass
 
+    # Имя кандидата
+    draw.text((name_x, 80), candidate.name, font=font_title, fill="#2C2C2A")
+
+    info_y = 115 if not photo_bytes else 170
     info_lines = [
         f"Возраст: {candidate.age or '—'}",
         f"Познакомились: {candidate.met_at or '—'}",
@@ -59,12 +93,12 @@ def generate_png(candidate: Candidate) -> bytes:
         f"{candidate.get_ai_attachment_type_display() or '—'}",
         f"Событий: {candidate.events.count()}",
     ]
-    y = 115
+    y = info_y
     for line in info_lines:
         draw.text((20, y), line, font=font_body, fill="#444441")
         y += 26
 
-    # Скор — блок справа
+    # Скор блок
     score = ScoringService.calculate(candidate)
     draw.rectangle(
         [W - 280, 70, W - 20, 260], fill="#F1EFE8", outline="#D3D1C7", width=1
@@ -84,7 +118,6 @@ def generate_png(candidate: Candidate) -> bytes:
     draw.text((W - 230, 115), score_text, font=font_large, fill=score_color)
     draw.text((W - 195, 175), "из 100", font=font_body, fill="#888780")
 
-    # Прогресс-бар
     if score is not None:
         bar_x, bar_y = W - 260, 210
         bar_w, bar_h = 220, 16
@@ -102,7 +135,6 @@ def generate_png(candidate: Candidate) -> bytes:
                 [bar_x, bar_y, bar_x + fill_w, bar_y + bar_h], fill=fill_color
             )
 
-    # Hard Stop
     if candidate.hard_stop_triggered:
         draw.rectangle(
             [20, 270, W - 20, 310], fill="#FCEBEB", outline="#A32D2D", width=1
@@ -112,14 +144,12 @@ def generate_png(candidate: Candidate) -> bytes:
         )
         events_y = 325
     else:
-        events_y = 285
+        events_y = y + 20
 
-    # Разделитель
     draw.line(
-        [20, events_y - 15, W - 20, events_y - 15], fill="#D3D1C7", width=1
+        [20, events_y - 10, W - 20, events_y - 10], fill="#D3D1C7", width=1
     )
 
-    # Последние события
     events = candidate.events.prefetch_related("scores__criterion").order_by(
         "-created_at"
     )[:4]
@@ -140,8 +170,6 @@ def generate_png(candidate: Candidate) -> bytes:
                 if scores
                 else "—"
             )
-
-            # Текст события
             raw = (
                 event.raw_text[:55] + "..."
                 if len(event.raw_text) > 55
@@ -149,8 +177,6 @@ def generate_png(candidate: Candidate) -> bytes:
             )
             draw.text((20, y), f"• {raw}", font=font_small, fill="#2C2C2A")
             y += 18
-
-            # Оценки на следующей строке
             if score_str != "—":
                 draw.text(
                     (30, y), score_str[:90], font=font_small, fill="#888780"
@@ -159,7 +185,6 @@ def generate_png(candidate: Candidate) -> bytes:
             else:
                 y += 4
 
-    # Нижняя полоса
     draw.rectangle([0, H - 36, W, H], fill="#F1EFE8")
     draw.text(
         (20, H - 24),

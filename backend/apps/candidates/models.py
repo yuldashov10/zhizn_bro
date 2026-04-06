@@ -37,6 +37,12 @@ class Candidate(models.Model):
         null=True,
         verbose_name="Фото",
     )
+    telegram_photo_id = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name="Telegram file_id фото",
+    )
     met_at = models.CharField(
         max_length=128,
         blank=True,

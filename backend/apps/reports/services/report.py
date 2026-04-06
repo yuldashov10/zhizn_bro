@@ -18,7 +18,9 @@ class ReportService:
     """
 
     @classmethod
-    def generate(cls, report: ReportLog) -> ReportLog:
+    def generate(
+        cls, report: ReportLog, photo_bytes: bytes | None = None
+    ) -> ReportLog:
         """
         Генерирует отчёт и сохраняет файл.
         Обновляет ReportLog с путём к файлу.
@@ -28,19 +30,15 @@ class ReportService:
 
         candidate = report.candidate
         if not candidate:
-            logger.warning(f"Отчёт {report.pk} без кандидата — пропускаем")
             return report
 
         try:
             content, filename, content_type = cls._generate_file(
                 report_type=report.report_type,
                 candidate=candidate,
+                photo_bytes=photo_bytes,
             )
-            report.file.save(
-                filename,
-                ContentFile(content),
-                save=True,
-            )
+            report.file.save(filename, ContentFile(content), save=True)
             logger.info(f"Отчёт {report.pk} сгенерирован: {filename}")
         except Exception as e:
             logger.error(f"Ошибка генерации отчёта {report.pk}: {e}")
@@ -53,6 +51,7 @@ class ReportService:
         cls,
         report_type: str,
         candidate: Candidate,
+        photo_bytes: bytes | None = None,
     ) -> tuple[bytes, str, str]:
         """
         Генерирует файл нужного типа.
@@ -65,10 +64,9 @@ class ReportService:
             .strip()
             .replace(" ", "_")
         )
-
         generators = {
             ReportLog.ReportType.PDF: (
-                generate_pdf,
+                lambda c: generate_pdf(c, photo_bytes),
                 f"report_{safe_name}.pdf",
                 "application/pdf",
             ),
@@ -78,12 +76,11 @@ class ReportService:
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # noqa: skip
             ),
             ReportLog.ReportType.PNG: (
-                generate_png,
+                lambda c: generate_png(c, photo_bytes),
                 f"report_{safe_name}.png",
                 "image/png",
             ),
         }
-
         generator_fn, filename, content_type = generators[report_type]
         content = generator_fn(candidate)
         return content, filename, content_type

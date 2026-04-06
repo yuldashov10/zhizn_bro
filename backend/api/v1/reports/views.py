@@ -70,8 +70,17 @@ class ReportGenerateView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         else:
-            # Файловые отчёты — через Celery
-            generate_report_task.delay(report.pk)
+            import base64
+
+            photo_bytes = None
+            photo_b64 = request.data.get("photo_b64")
+            if photo_b64:
+                try:
+                    photo_bytes = base64.b64decode(photo_b64)
+                except Exception:
+                    pass
+
+            generate_report_task.delay(report.pk, photo_bytes=photo_bytes)
             return Response(
                 ReportLogSerializer(report).data,
                 status=status.HTTP_201_CREATED,
