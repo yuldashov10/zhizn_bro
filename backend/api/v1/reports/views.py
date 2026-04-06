@@ -76,3 +76,11 @@ class ReportGenerateView(APIView):
                 ReportLogSerializer(report).data,
                 status=status.HTTP_201_CREATED,
             )
+
+
+class ReportDetailView(APIView):
+    """Детали конкретного отчёта."""
+
+    def get(self, request: Request, pk: int) -> Response:
+        report = get_object_or_404(ReportLog, pk=pk, user=request.user)
+        return Response(ReportLogSerializer(report).data)

@@ -284,3 +284,7 @@ class BROApiClient:
         if candidate_id:
             payload["candidate_id"] = candidate_id
         return await self._request("POST", "reports/generate/", json=payload)
+
+    async def get_report(self, report_id: int) -> dict:
+        """Получить детали отчёта по ID."""
+        return await self._request("GET", f"reports/{report_id}/")

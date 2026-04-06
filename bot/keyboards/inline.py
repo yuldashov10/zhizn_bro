@@ -108,18 +108,28 @@ def get_status_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def get_report_type_keyboard() -> InlineKeyboardMarkup:
-    """Клавиатура выбора типа отчёта."""
+def get_report_type_keyboard(candidate_id: int) -> InlineKeyboardMarkup:
+    """Клавиатура выбора типа отчёта с ID кандидата в callback."""
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="📄 PDF", callback_data="report:pdf"),
-        InlineKeyboardButton(text="📊 Excel", callback_data="report:excel"),
-        InlineKeyboardButton(text="🖼 PNG", callback_data="report:png"),
-        InlineKeyboardButton(text="💬 Текст", callback_data="report:text"),
+        InlineKeyboardButton(
+            text="📄 PDF", callback_data=f"report:pdf:{candidate_id}"
+        ),
+        InlineKeyboardButton(
+            text="📊 Excel", callback_data=f"report:excel:{candidate_id}"
+        ),
     )
     builder.row(
         InlineKeyboardButton(
-            text="❌ Отмена",
+            text="🖼 PNG", callback_data=f"report:png:{candidate_id}"
+        ),
+        InlineKeyboardButton(
+            text="💬 Текст", callback_data=f"report:text:{candidate_id}"
+        ),
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="❌ Закрыть",
             callback_data="cancel",
         )
     )
@@ -203,4 +213,25 @@ def get_attachment_type_keyboard() -> InlineKeyboardMarkup:
                 callback_data=f"attachment:set:{value}",
             )
         )
+    return builder.as_markup()
+
+
+def get_candidates_for_report_inline(
+    candidates: list[dict],
+) -> InlineKeyboardMarkup:
+    """Inline клавиатура кандидатов для выбора отчёта."""
+    builder = InlineKeyboardBuilder()
+    for candidate in candidates:
+        builder.row(
+            InlineKeyboardButton(
+                text=f"👤 {candidate['name']}",
+                callback_data=f"report_candidate:{candidate['id']}",
+            )
+        )
+    builder.row(
+        InlineKeyboardButton(
+            text="❌ Отмена",
+            callback_data="cancel",
+        )
+    )
     return builder.as_markup()

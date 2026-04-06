@@ -12,6 +12,7 @@ from bot.handlers import (
     cancel,
     candidates,
     events,
+    reports,
     settings,
     start,
 )
@@ -37,6 +38,7 @@ async def main() -> None:
     dp.include_router(events.router)
     dp.include_router(assessments.router)
     dp.include_router(settings.router)
+    dp.include_router(reports.router)
 
     logger.info("Бот запущен")
 
