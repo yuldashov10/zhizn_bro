@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 
+from constance import config
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -91,9 +92,9 @@ def _on_page(canvas, doc) -> None:
     canvas.rect(0, H - 8 * mm, W, 8 * mm, fill=1, stroke=0)
     canvas.setFillColor(WHITE)
     canvas.setFont(BOLD, 8)
-    canvas.drawString(20 * mm, H - 5.5 * mm, "Жизнь БРО — Отчёт")
+    canvas.drawString(20 * mm, H - 5.5 * mm, f"{config.BOT_NAME} — Отчёт")
     canvas.setFont(NORMAL, 8)
-    canvas.drawRightString(W - 20 * mm, H - 5.5 * mm, "@zhizn_bro_bot")
+    canvas.drawRightString(W - 20 * mm, H - 5.5 * mm, config.BOT_USERNAME)
     canvas.setStrokeColor(GRAY_M)
     canvas.setLineWidth(0.4)
     canvas.line(20 * mm, 14 * mm, W - 20 * mm, 14 * mm)
@@ -464,7 +465,8 @@ def generate_pdf(  # noqa: skip
     watermark_data = [
         [
             P(
-                "Отчёт сгенерирован ботом @zhizn_bro_bot • Жизнь БРО (Без Розовых Очков)",  # noqa: skip
+                f"Отчёт сгенерирован ботом {config.BOT_USERNAME} • "
+                f"{config.BOT_NAME} (<b>Б</b>ез <b>Р</b>озовых <b>О</b>чков)",
                 "body",
             )
         ]
