@@ -28,13 +28,14 @@ class AuthMiddleware(BaseMiddleware):
         if not user:
             return await handler(event, data)
 
-        token = await self._get_or_create_token(
+        token, is_new_user = await self._get_or_create_token(
             telegram_id=user.id,
             username=user.username,
         )
 
         data["api"] = BROApiClient(token=token)
         data["token"] = token
+        data["is_new_user"] = is_new_user  # ← передаём флаг
 
         try:
             return await handler(event, data)
@@ -45,12 +46,10 @@ class AuthMiddleware(BaseMiddleware):
         self,
         telegram_id: int,
         username: str | None,
-    ) -> str:
-        """
-        Возвращает токен из кэша или запрашивает новый.
-        """
+    ) -> tuple[str, bool]:
+        """Возвращает (токен, is_new_user)."""
         if telegram_id in _token_cache:
-            return _token_cache[telegram_id]
+            return _token_cache[telegram_id], False
 
         client = BROApiClient()
         try:
@@ -59,9 +58,13 @@ class AuthMiddleware(BaseMiddleware):
                 username=username,
             )
             token = response["token"]
+            is_new = response.get("created", False)
             _token_cache[telegram_id] = token
-            logger.info(f"Токен получен для {telegram_id}")
-            return token
+            logger.info(
+                f"{'Новый' if is_new else 'Вернувшийся'} "
+                f"пользователь {telegram_id}"
+            )
+            return token, is_new
         except APIError as e:
             logger.error(f"Ошибка авторизации {telegram_id}: {e}")
             raise

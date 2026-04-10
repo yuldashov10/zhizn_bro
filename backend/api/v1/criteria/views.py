@@ -17,8 +17,18 @@ class HardStopListView(APIView):
     """Список Hard Stops — системных и пользовательских."""
 
     def get(self, request: Request) -> Response:
+        from apps.criteria.models import UserHardStopSettings
+
         hard_stops = HardStop.objects.filter(is_default=True)
-        serializer = HardStopSerializer(hard_stops, many=True)
+        user_settings = {
+            s.hard_stop_id: s.is_active
+            for s in UserHardStopSettings.objects.filter(user=request.user)
+        }
+        serializer = HardStopSerializer(
+            hard_stops,
+            many=True,
+            context={"user_settings": user_settings},
+        )
         return Response(serializer.data)
 
 
@@ -71,11 +81,31 @@ class CriterionListView(APIView):
     """Список системных критериев с эффективными весами."""
 
     def get(self, request: Request) -> Response:
+        from apps.criteria.models import UserCriterionSettings
+
         criteria = Criterion.objects.filter(is_default=True)
+        user_settings = {
+            s.criterion_id: s.is_active
+            for s in UserCriterionSettings.objects.filter(user=request.user)
+        }
+
+        active_criteria = [
+            c for c in criteria if user_settings.get(c.pk, True)
+        ]
+        try:
+            weights = CriteriaWeightService.get_effective_weights(
+                active_criteria
+            )
+        except ValueError:
+            weights = {}
+
         serializer = CriterionSerializer(
             criteria,
             many=True,
-            context={"request": request},
+            context={
+                "user_settings": user_settings,
+                "weights": weights,
+            },
         )
         return Response(serializer.data)
 
@@ -108,7 +138,6 @@ class CriterionToggleView(APIView):
         )
 
         if not created:
-            # Проверяем можно ли отключить
             if settings.is_active:
                 active_criteria = self._get_active_criteria(request.user)
                 if not CriteriaWeightService.can_disable(active_criteria):

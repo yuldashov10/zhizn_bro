@@ -1,6 +1,15 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
+class SettingsStates(StatesGroup):
+    """Состояния раздела настроек."""
+
+    main = State()
+    hard_stops = State()
+    criteria = State()
+    suggesting_hs = State()
+
+
 class RegistrationStates(StatesGroup):
     """Состояния регистрации пользователя."""
 

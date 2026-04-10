@@ -31,14 +31,16 @@ async def add_event_start(
     state: FSMContext,
     api: BROApiClient,
 ) -> None:
-    """Начинает диалог добавления события."""
     try:
         candidates = await api.get_candidates(is_active=True)
         if not candidates:
             await message.answer(
-                "У тебя нет активных кандидатов. Сначала добавь кандидата.",
-                reply_markup=get_main_menu(),
+                "У тебя нет активных кандидатов.\n"
+                "Давай добавим первую кандидатку!",
             )
+            from bot.handlers.candidates import add_candidate_start
+
+            await add_candidate_start(message, state)
             return
         await state.set_state(EventStates.waiting_for_candidate)
         await state.update_data(candidates=candidates)

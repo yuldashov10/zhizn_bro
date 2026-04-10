@@ -256,16 +256,42 @@ class BROApiClient:
     # ── Hard Stops ────────────────────────────────────────────────────────
 
     async def get_hard_stops(self) -> list[dict]:
-        """Получить список Hard Stops."""
+        """Получить список системных Hard Stops."""
         data = await self._request("GET", "hard-stops/")
-        return data.get("results", data)
+        if isinstance(data, list):
+            return data
+        return data.get("results", [])
+
+    async def toggle_hard_stop(self, hard_stop_id: int) -> dict:
+        """Включить / выключить Hard Stop."""
+        return await self._request(
+            "POST",
+            f"hard-stops/{hard_stop_id}/toggle/",
+        )
+
+    async def suggest_hard_stop(self, text: str) -> dict:
+        """Предложить новый Hard Stop."""
+        return await self._request(
+            "POST",
+            "hard-stops/suggest/",
+            json={"text": text},
+        )
 
     # ── Criteria ──────────────────────────────────────────────────────────
 
     async def get_criteria(self) -> list[dict]:
         """Получить список критериев."""
         data = await self._request("GET", "criteria/")
-        return data.get("results", data)
+        if isinstance(data, list):
+            return data
+        return data.get("results", [])
+
+    async def toggle_criterion(self, criterion_id: int) -> dict:
+        """Включить / выключить критерий."""
+        return await self._request(
+            "POST",
+            f"criteria/{criterion_id}/toggle/",
+        )
 
     # ── Reports ───────────────────────────────────────────────────────────
 

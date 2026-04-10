@@ -16,20 +16,19 @@ router = Router()
 async def start_handler(
     message: Message,
     api: BROApiClient,
+    is_new_user: bool,
 ) -> None:
     """Обработчик команды /start."""
-    try:
-        await api.get_me()
-        # Пользователь уже зарегистрирован
-        await message.answer(
-            ALREADY_REGISTERED,
-            reply_markup=get_main_menu(),
-        )
-        logger.info(f"Пользователь {message.from_user.id} вернулся")
-    except Exception:
+    if is_new_user:
         await message.answer(
             WELCOME,
             reply_markup=get_main_menu(),
             parse_mode="HTML",
         )
         logger.info(f"Новый пользователь {message.from_user.id}")
+    else:
+        await message.answer(
+            ALREADY_REGISTERED,
+            reply_markup=get_main_menu(),
+        )
+        logger.info(f"Пользователь {message.from_user.id} вернулся")
