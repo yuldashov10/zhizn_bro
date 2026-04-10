@@ -1,6 +1,6 @@
 .PHONY: install run bot migrate test build up down logs shell celery celery-beat \
         clean project_tree lint format check createsuperuser \
-        add_basic_sys_criteria clear_db fakedata
+        add_basic_sys_criteria clear_db fakedata setup_tasks
 
 # ── Переменные ────────────────────────────────────────────────────────────────
 PYTHON     = poetry run python
@@ -37,6 +37,9 @@ fakedata:
 
 clear_db:
 	$(MANAGE) clear_fakedata --confirm
+
+setup_tasks:
+	$(MANAGE) setup_periodic_tasks
 
 # ── Тесты ─────────────────────────────────────────────────────────────────────
 test:

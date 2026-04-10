@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 
+from constance import config
 from PIL import Image, ImageDraw, ImageFont
 
 from apps.candidates.models import Candidate
@@ -64,8 +65,10 @@ def generate_png(  # noqa: skip
 
     # Верхняя полоса
     draw.rectangle([0, 0, W, 60], fill="#534AB7")
-    draw.text((20, 18), "Жизнь БРО", font=font_title, fill="#FFFFFF")
-    draw.text((W - 220, 20), "@zhizn_bro_bot", font=font_body, fill="#EEEDFE")
+    draw.text((20, 18), config.BOT_NAME, font=font_title, fill="#FFFFFF")
+    draw.text(
+        (W - 220, 20), config.BOT_USERNAME, font=font_body, fill="#EEEDFE"
+    )
 
     # Аватар если есть фото
     avatar_size = 80
@@ -189,7 +192,8 @@ def generate_png(  # noqa: skip
     draw.text(
         (20, H - 24),
         "Сгенерировано: "
-        f"{datetime.now().strftime('%d.%m.%Y %H:%M')} • @zhizn_bro_bot",
+        f"{datetime.now().strftime('%d.%m.%Y %H:%M')} "
+        f"• {config.BOT_USERNAME}",
         font=font_small,
         fill="#888780",
     )

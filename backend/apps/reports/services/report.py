@@ -1,5 +1,6 @@
 import logging
 
+from core.utils import FileNameGenerator
 from django.core.files.base import ContentFile
 
 from apps.candidates.models import Candidate
@@ -7,6 +8,7 @@ from apps.reports.models import ReportLog
 from apps.reports.services.excel import generate_excel
 from apps.reports.services.pdf import generate_pdf
 from apps.reports.services.png import generate_png
+from apps.reports.services.text_report import TextReportBuilder
 
 logger = logging.getLogger("apps.reports")
 
@@ -53,83 +55,38 @@ class ReportService:
         candidate: Candidate,
         photo_bytes: bytes | None = None,
     ) -> tuple[bytes, str, str]:
-        """
-        Генерирует файл нужного типа.
-        Возвращает (содержимое, имя файла, content_type).
-        """
-        safe_name = (
-            "".join(
-                c for c in candidate.name if c.isalnum() or c in (" ", "_")
-            )
-            .strip()
-            .replace(" ", "_")
-        )
-        generators = {
-            ReportLog.ReportType.PDF: (
-                lambda c: generate_pdf(c, photo_bytes),
-                f"report_{safe_name}.pdf",
-                "application/pdf",
-            ),
+
+        extensions = {
+            ReportLog.ReportType.PDF: ("pdf", "application/pdf"),
             ReportLog.ReportType.EXCEL: (
-                generate_excel,
-                f"report_{safe_name}.xlsx",
+                "xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # noqa: skip
             ),
-            ReportLog.ReportType.PNG: (
-                lambda c: generate_png(c, photo_bytes),
-                f"report_{safe_name}.png",
-                "image/png",
-            ),
+            ReportLog.ReportType.PNG: ("png", "image/png"),
         }
-        generator_fn, filename, content_type = generators[report_type]
-        content = generator_fn(candidate)
+        ext, content_type = extensions[report_type]
+        filename = FileNameGenerator.generate(
+            name=candidate.name,
+            extension=ext,
+        )
+
+        generators = {
+            ReportLog.ReportType.PDF: lambda c: generate_pdf(c, photo_bytes),
+            ReportLog.ReportType.EXCEL: generate_excel,
+            ReportLog.ReportType.PNG: lambda c: generate_png(c, photo_bytes),
+        }
+        content = generators[report_type](candidate)
         return content, filename, content_type
 
     @classmethod
-    def generate_text_report(cls, candidate: Candidate) -> str:
+    def generate_text_report(cls, candidate) -> str:
         """
-        Генерирует текстовый отчёт для отправки в Telegram.
+        Генерирует текстовый отчёт через TextReportBuilder.
+
+        Args:
+            candidate: объект Candidate
+
+        Returns:
+            str: HTML-форматированный текст
         """
-        from apps.events.services import ScoringService
-
-        score = ScoringService.calculate(candidate)
-        events_count = candidate.events.count()
-        score_bar = cls._build_score_bar(score)
-
-        lines = [
-            f"📊 <b>Отчёт: {candidate.name}</b>\n",
-            f"Возраст: {candidate.age or '—'}",
-            f"Познакомились: {candidate.met_at or '—'}",
-            f"Тип привязанности: "
-            f"{candidate.get_ai_attachment_type_display() or '—'}",
-            f"Событий: {events_count}",
-        ]
-
-        if score is not None:
-            lines += [
-                f"\n{score_bar}",
-                f"<b>Скор: {score}/100</b>",
-            ]
-        else:
-            lines.append("\n<i>Недостаточно данных для скора</i>")
-
-        if candidate.hard_stop_triggered:
-            lines.append("\n🚨 <b>Hard Stop сработал!</b>")
-
-        # Последние 3 события
-        recent_events = candidate.events.order_by("-created_at")[:3]
-        if recent_events:
-            lines.append("\n<b>Последние события:</b>")
-            for event in recent_events:
-                lines.append(f"• {event.raw_text[:60]}")
-
-        lines.append("\n<i>Сгенерировано @zhizn_bro_bot</i>")
-        return "\n".join(lines)
-
-    @staticmethod
-    def _build_score_bar(score: int | None) -> str:
-        if score is None:
-            return ""
-        filled = round(score / 10)
-        empty = 10 - filled
-        return f"{'🟩' * filled}{'⬜' * empty}"
+        return TextReportBuilder.build(candidate)

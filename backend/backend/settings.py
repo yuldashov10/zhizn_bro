@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     "django_extensions",
+    "constance",
+    "constance.backends.database",
+    "django_celery_beat",
 ]
 
 PROJECT_APPS = [
@@ -223,3 +226,83 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+
+# ── Constance — настройки через Django Admin ──────────────────────────────
+
+CONSTANCE_CONFIG = {
+    # Отчёты
+    "REPORT_RETENTION_DAYS": (
+        30,
+        "Хранить файлы отчётов N дней (минимум 1).",
+        int,
+    ),
+    "WEEKLY_REPORTS_ENABLED": (
+        True,
+        "Включить еженедельную автоматическую генерацию отчётов.",
+        bool,
+    ),
+    "WEEKLY_REPORTS_HOUR": (
+        9,
+        "Час запуска еженедельных отчётов (0-23, UTC).",
+        int,
+    ),
+    "WEEKLY_REPORTS_DAY": (
+        1,
+        "День недели для отчётов (1=пн, 7=вс).",
+        int,
+    ),
+    "CLEANUP_HOUR": (
+        3,
+        "Час запуска ежедневной очистки старых отчётов (0-23, UTC).",
+        int,
+    ),
+    # Токены
+    "AI_DAILY_TOKEN_LIMIT_FREE": (
+        10_000,
+        "Дневной лимит токенов для бесплатного тарифа.",
+        int,
+    ),
+    "AI_MONTHLY_TOKEN_LIMIT_FREE": (
+        100_000,
+        "Месячный лимит токенов для бесплатного тарифа.",
+        int,
+    ),
+    # Брендинг
+    "BOT_USERNAME": (
+        "@zhizn_bro_bot",
+        "Username бота в Telegram (используется в watermark отчётов).",
+        str,
+    ),
+    "BOT_NAME": (
+        "Жизнь БРО",
+        "Название бота (используется в отчётах и сообщениях).",
+        str,
+    ),
+    # Скоринг
+    "SCORE_MIN_EVENTS": (
+        1,
+        "Минимальное количество событий для расчёта скора.",
+        int,
+    ),
+}
+
+CONSTANCE_CONFIG_FIELDSETS = {
+    "Отчёты": (
+        "REPORT_RETENTION_DAYS",
+        "WEEKLY_REPORTS_ENABLED",
+        "WEEKLY_REPORTS_HOUR",
+        "WEEKLY_REPORTS_DAY",
+        "CLEANUP_HOUR",
+    ),
+    "Токены": (
+        "AI_DAILY_TOKEN_LIMIT_FREE",
+        "AI_MONTHLY_TOKEN_LIMIT_FREE",
+    ),
+    "Брендинг": (
+        "BOT_USERNAME",
+        "BOT_NAME",
+    ),
+    "Скоринг": ("SCORE_MIN_EVENTS",),
+}
+
+CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
