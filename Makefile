@@ -1,6 +1,6 @@
 .PHONY: install run bot migrate test build up down logs shell celery celery-beat \
         clean project_tree lint format check createsuperuser \
-        add_basic_sys_criteria clear_db fakedata setup_tasks
+        add_basic_sys_criteria clear_db fakedata setup_tasks health
 
 # ── Переменные ────────────────────────────────────────────────────────────────
 PYTHON     = poetry run python
@@ -97,3 +97,9 @@ clean:
 
 project_tree:
 	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"
+
+health:
+	@echo "Проверка health check..."
+	@curl -s --max-time 5 http://localhost:8000/health/| python -m json.tool \
+		&& echo "" \
+		|| echo "❌ Сервер недоступен. Запусти: make run"
