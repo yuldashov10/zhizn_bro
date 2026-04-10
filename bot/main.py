@@ -15,6 +15,7 @@ from bot.handlers import (
     reports,
     settings,
     start,
+    tests,
 )
 from bot.middlewares.auth import AuthMiddleware
 
@@ -39,6 +40,7 @@ async def main() -> None:
     dp.include_router(assessments.router)
     dp.include_router(settings.router)
     dp.include_router(reports.router)
+    dp.include_router(tests.router)
 
     logger.info("Бот запущен")
 

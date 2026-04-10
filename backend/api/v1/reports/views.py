@@ -50,6 +50,11 @@ class ReportGenerateView(APIView):
                 pk=candidate_id,
                 user=request.user,
             )
+            if not candidate.events.exists():
+                return Response(
+                    {"detail": "У кандидата нет событий для отчёта."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         report_type = serializer.validated_data["report_type"]
         report = ReportLog.objects.create(

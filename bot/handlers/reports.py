@@ -139,7 +139,16 @@ async def report_type_selected(  # noqa: skip
     except APIError as e:
         await generating_msg.delete()
         logger.error(f"Ошибка генерации отчёта: {e}")
-        await callback.message.answer(ERROR_GENERAL)
+        if "400" in str(e):
+            await callback.message.answer(
+                "❌ У кандидата нет событий.\n"
+                "Сначала добавь хотя бы одно событие.",
+                reply_markup=get_main_menu(),
+            )
+        else:
+            await callback.message.answer(
+                ERROR_GENERAL, reply_markup=get_main_menu()
+            )
     finally:
         await callback.answer()
 

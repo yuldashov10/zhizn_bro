@@ -235,3 +235,98 @@ def get_candidates_for_report_inline(
         )
     )
     return builder.as_markup()
+
+
+def get_settings_menu() -> InlineKeyboardMarkup:
+    """Главное меню настроек."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="🚫 Hard Stops",
+            callback_data="settings:hard_stops",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="⚖️ Критерии оценки",
+            callback_data="settings:criteria",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="🧪 Тест привязанности",
+            callback_data="settings:test",
+        )
+    )
+    return builder.as_markup()
+
+
+def get_hard_stops_keyboard(hard_stops: list[dict]) -> InlineKeyboardMarkup:
+    """Список Hard Stops с кнопками вкл/выкл."""
+    builder = InlineKeyboardBuilder()
+    for hs in hard_stops:
+        icon = "✅" if hs["is_active"] else "❌"
+        builder.row(
+            InlineKeyboardButton(
+                text=f"{icon} {hs['name']}",
+                callback_data=f"hs_toggle:{hs['id']}",
+            )
+        )
+    builder.row(
+        InlineKeyboardButton(
+            text="💡 Предложить новый",
+            callback_data="hs_suggest",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="🔙 Назад",
+            callback_data="settings:back",
+        )
+    )
+    return builder.as_markup()
+
+
+def get_criteria_keyboard(criteria: list[dict]) -> InlineKeyboardMarkup:
+    """Список критериев с кнопками вкл/выкл и эффективными весами."""
+    builder = InlineKeyboardBuilder()
+    for c in criteria:
+        icon = "✅" if c["is_active"] else "❌"
+        weight = c["effective_weight"] if c["is_active"] else "выкл"
+        builder.row(
+            InlineKeyboardButton(
+                text=f"{icon} {c['name']} [{weight}]",
+                callback_data=f"cr_toggle:{c['id']}",
+            )
+        )
+    builder.row(
+        InlineKeyboardButton(
+            text="🔙 Назад",
+            callback_data="settings:back",
+        )
+    )
+    return builder.as_markup()
+
+
+def get_tests_menu() -> InlineKeyboardMarkup:
+    """Меню доступных тестов."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="🔗 Тип привязанности",
+            callback_data="tests:attachment",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="🧠 Тип темперамента",
+            callback_data="tests:temperament",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="❤️ Любовные языки",
+            callback_data="tests:love_languages",
+        )
+    )
+    return builder.as_markup()

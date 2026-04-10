@@ -1,39 +1,73 @@
-.PHONY: install run bot migrate test build up down logs shell celery clean project_tree
+.PHONY: install run bot migrate test build up down logs shell celery celery-beat \
+        clean project_tree lint format check createsuperuser \
+        add_basic_sys_criteria clear_db fakedata
 
-clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.DS_Store" -delete
-	rm -rf .mypy_cache
-	rm -rf .pytest_cache
-	@echo "Cleaned up temporary files."
+# ── Переменные ────────────────────────────────────────────────────────────────
+PYTHON     = poetry run python
+MANAGE     = cd backend && $(PYTHON) manage.py
+LINT_DIRS  = bot backend tests
 
-project_tree:
-	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"
-
+# ── Установка ─────────────────────────────────────────────────────────────────
 install:
 	poetry install
 
+# ── Разработка ────────────────────────────────────────────────────────────────
 run:
-	cd backend && poetry run python manage.py runserver
+	$(MANAGE) runserver
 
 bot:
-	poetry run python run_bot.py
+	$(PYTHON) run_bot.py
 
+shell:
+	$(MANAGE) shell
+
+createsuperuser:
+	$(MANAGE) createsuperuser
+
+# ── База данных ───────────────────────────────────────────────────────────────
 migrate:
-	cd backend && poetry run python manage.py makemigrations
-	cd backend && poetry run python manage.py migrate
+	$(MANAGE) makemigrations
+	$(MANAGE) migrate
 
+add_basic_sys_criteria:
+	$(MANAGE) upload_fakedata --users=0 --candidates=0 --events=0
+
+fakedata:
+	$(MANAGE) upload_fakedata
+
+clear_db:
+	$(MANAGE) clear_fakedata --confirm
+
+# ── Тесты ─────────────────────────────────────────────────────────────────────
 test:
-	cd backend && poetry run pytest tests/ -v
+	cd backend && $(PYTHON) -m pytest tests/ -v
 
+test-cov:
+	cd backend && $(PYTHON) -m pytest tests/ -v --cov=apps --cov-report=html
+	@echo "Coverage report: backend/htmlcov/index.html"
+
+# ── Качество кода ─────────────────────────────────────────────────────────────
+format:
+	$(PYTHON) -m isort $(LINT_DIRS)
+	$(PYTHON) -m black $(LINT_DIRS)
+
+lint:
+	$(PYTHON) -m flake8 $(LINT_DIRS)
+
+check:
+	$(MANAGE) check
+	$(PYTHON) -m flake8 $(LINT_DIRS)
+	$(PYTHON) -m isort $(LINT_DIRS) --check-only
+	$(PYTHON) -m black $(LINT_DIRS) --check
+
+# ── Celery ────────────────────────────────────────────────────────────────────
 celery:
-	cd backend && poetry run celery -A backend worker --loglevel=info
+	cd backend && $(PYTHON) -m celery -A backend worker --loglevel=info
 
 celery-beat:
-	cd backend && poetry run celery -A backend beat --loglevel=info
+	cd backend && $(PYTHON) -m celery -A backend beat --loglevel=info
 
+# ── Docker ────────────────────────────────────────────────────────────────────
 build:
 	docker-compose build
 
@@ -46,12 +80,17 @@ down:
 logs:
 	docker-compose logs -f
 
-shell:
-	cd backend && poetry run python manage.py shell
+restart:
+	docker-compose down && docker-compose up -d
 
-createsuperuser:
-	cd backend && poetry run python manage.py createsuperuser
+# ── Утилиты ───────────────────────────────────────────────────────────────────
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.DS_Store" -delete
+	rm -rf .mypy_cache .pytest_cache backend/htmlcov
+	@echo "Cleaned up temporary files."
 
-
-add_basic_sys_criteria:
-	cd backend && poetry run python manage.py upload_fakedata --users=0 --candidates=0 --events=0
+project_tree:
+	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"

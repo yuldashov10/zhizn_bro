@@ -15,7 +15,7 @@ def get_main_menu() -> ReplyKeyboardMarkup:
             ],
             [
                 KeyboardButton(text="📊 Отчёты"),
-                KeyboardButton(text="🧪 Тест привязанности"),
+                KeyboardButton(text="🧪 Тесты"),
             ],
             [
                 KeyboardButton(text="⚙️ Настройки"),
