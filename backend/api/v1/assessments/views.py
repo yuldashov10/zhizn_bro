@@ -1,9 +1,3 @@
-from api.v1.assessments.serializers import (
-    AttachmentTestDetailSerializer,
-    AttachmentTestSerializer,
-    UserAnswerSerializer,
-    UserTestSessionSerializer,
-)
 from core.pagination import StandardPagination
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -12,6 +6,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.assessments.serializers import (
+    AttachmentTestDetailSerializer,
+    AttachmentTestSerializer,
+    UserAnswerSerializer,
+    UserTestSessionSerializer,
+)
 from apps.assessments.models import AttachmentTest, UserAnswer, UserTestSession
 from apps.users.models import UserProfile
 

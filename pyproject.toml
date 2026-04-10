@@ -112,6 +112,8 @@ force_grid_wrap = 0
 use_parentheses = true
 known_local_folder = [
     "apps",
+    "api",
+    "bot",
 ]
 
 [tool.pytest.ini_options]

@@ -1,9 +1,10 @@
+from django.urls import path
+
 from api.v1.reports.views import (
     ReportDetailView,
     ReportGenerateView,
     ReportListView,
 )
-from django.urls import path
 
 urlpatterns = [
     path("reports/", ReportListView.as_view(), name="reports-list"),

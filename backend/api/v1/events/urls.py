@@ -1,9 +1,10 @@
+from django.urls import path
+
 from api.v1.events.views import (
     EventConfirmView,
     EventDetailView,
     EventListView,
 )
-from django.urls import path
 
 urlpatterns = [
     path("events/", EventListView.as_view(), name="events-list"),

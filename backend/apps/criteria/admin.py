@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Criterion, HardStop
+from apps.criteria.models import (
+    Criterion,
+    HardStop,
+    HardStopSuggestion,
+    UserCriterionSettings,
+    UserHardStopSettings,
+)
 
 
 @admin.register(HardStop)
@@ -70,3 +76,64 @@ class CriterionAdmin(admin.ModelAdmin):
     def weight_display(self, obj: Criterion) -> str:
         """Отображает вес критерия в процентах."""
         return f"{obj.weight * 100:.0f}%"
+
+
+@admin.register(HardStopSuggestion)
+class HardStopSuggestionAdmin(admin.ModelAdmin):
+    """Предложения пользователей по новым Hard Stops."""
+
+    list_display = [
+        "user",
+        "text_preview",
+        "status",
+        "created_at",
+    ]
+    list_filter = ["status"]
+    search_fields = [
+        "user__telegram_id",
+        "user__username",
+        "text",
+    ]
+    readonly_fields = ["user", "text", "created_at"]
+    ordering = ["-created_at"]
+    actions = ["approve_suggestions", "reject_suggestions"]
+
+    @admin.display(description="Предложение")
+    def text_preview(self, obj: HardStopSuggestion) -> str:
+        return obj.text[:60] + "..." if len(obj.text) > 60 else obj.text
+
+    @admin.action(description="Одобрить выбранные")
+    def approve_suggestions(self, request, queryset):
+        queryset.update(status=HardStopSuggestion.Status.APPROVED)
+
+    @admin.action(description="Отклонить выбранные")
+    def reject_suggestions(self, request, queryset):
+        queryset.update(status=HardStopSuggestion.Status.REJECTED)
+
+
+@admin.register(UserHardStopSettings)
+class UserHardStopSettingsAdmin(admin.ModelAdmin):
+    """Настройки Hard Stops пользователей."""
+
+    list_display = ["user", "hard_stop", "is_active"]
+    list_filter = ["is_active"]
+    search_fields = [
+        "user__telegram_id",
+        "user__username",
+        "hard_stop__name",
+    ]
+    readonly_fields = ["user", "hard_stop"]
+
+
+@admin.register(UserCriterionSettings)
+class UserCriterionSettingsAdmin(admin.ModelAdmin):
+    """Настройки критериев пользователей."""
+
+    list_display = ["user", "criterion", "is_active"]
+    list_filter = ["is_active"]
+    search_fields = [
+        "user__telegram_id",
+        "user__username",
+        "criterion__name",
+    ]
+    readonly_fields = ["user", "criterion"]

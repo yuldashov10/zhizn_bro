@@ -1,3 +1,5 @@
+from django.urls import path
+
 from api.v1.candidates.views import (
     CandidateArchiveView,
     CandidateDetailView,
@@ -6,7 +8,6 @@ from api.v1.candidates.views import (
     CandidateStatusHistoryView,
     CandidateStatusUpdateView,
 )
-from django.urls import path
 
 urlpatterns = [
     path("candidates/", CandidateListView.as_view(), name="candidates-list"),
