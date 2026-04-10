@@ -10,10 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import logging
 from pathlib import Path
 
+import sentry_sdk
 from decouple import Csv, config
 from django.core.management.utils import get_random_secret_key
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -201,19 +206,28 @@ LOGGING = {
             "backupCount": 5,
             "formatter": "verbose",
         },
+        "telegram": {
+            "class": "core.sentry.SentryTelegramHandler",
+            "level": "CRITICAL",
+        },
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "file"],
+            "handlers": ["console", "file", "telegram"],
             "level": "INFO",
         },
         "ai": {
-            "handlers": ["console", "file"],
+            "handlers": ["console", "file", "telegram"],
             "level": "DEBUG",
             "propagate": False,
         },
         "apps": {
-            "handlers": ["console", "file"],
+            "handlers": ["console", "file", "telegram"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "bot": {
+            "handlers": ["console", "telegram"],
             "level": "DEBUG",
             "propagate": False,
         },
@@ -284,6 +298,12 @@ CONSTANCE_CONFIG = {
         "Минимальное количество событий для расчёта скора.",
         int,
     ),
+    # Мониторинг
+    "ADMIN_TELEGRAM_ID": (
+        config("ADMIN_TELEGRAM_ID", default=""),
+        "Telegram ID администратора для уведомлений об ошибках.",
+        str,
+    ),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = {
@@ -303,6 +323,32 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "BOT_NAME",
     ),
     "Скоринг": ("SCORE_MIN_EVENTS",),
+    "Мониторинг": ("ADMIN_TELEGRAM_ID",),
 }
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
+
+SENTRY_DSN = config("SENTRY_DSN", default="")
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(
+                transaction_style="url",
+                middleware_spans=True,
+            ),
+            CeleryIntegration(
+                monitor_beat_tasks=True,
+            ),
+            LoggingIntegration(
+                level=logging.INFO,  # INFO и выше → breadcrumbs
+                event_level=logging.ERROR,  # ERROR и выше → Sentry event
+            ),
+        ],
+        traces_sample_rate=0.2,  # 20% запросов для performance мониторинга
+        profiles_sample_rate=0.1,
+        send_default_pii=False,  # не отправляем персональные данные
+        environment=config("ENVIRONMENT", default="development"),
+        release=config("APP_VERSION", default="1.0.0"),
+    )
