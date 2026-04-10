@@ -1,5 +1,6 @@
-from api.v1.users.views import MeView, TelegramAuthView, TokenLimitView
 from django.urls import path
+
+from api.v1.users.views import MeView, TelegramAuthView, TokenLimitView
 
 urlpatterns = [
     path("auth/telegram/", TelegramAuthView.as_view(), name="auth-telegram"),

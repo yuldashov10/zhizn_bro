@@ -1,10 +1,3 @@
-from api.v1.candidates.serializers import (
-    CandidateDetailSerializer,
-    CandidateScoreSerializer,
-    CandidateSerializer,
-    CandidateStatusHistorySerializer,
-    CandidateStatusUpdateSerializer,
-)
 from core.filters import CandidateFilter
 from core.pagination import StandardPagination
 from django.shortcuts import get_object_or_404
@@ -15,6 +8,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.candidates.serializers import (
+    CandidateDetailSerializer,
+    CandidateScoreSerializer,
+    CandidateSerializer,
+    CandidateStatusHistorySerializer,
+    CandidateStatusUpdateSerializer,
+)
 from apps.candidates.models import Candidate, CandidateStatusHistory
 from apps.events.models import Event
 from apps.events.services import ScoringService

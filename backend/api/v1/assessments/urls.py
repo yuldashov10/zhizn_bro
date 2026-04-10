@@ -1,3 +1,5 @@
+from django.urls import path
+
 from api.v1.assessments.views import (
     AttachmentTestDetailView,
     AttachmentTestListView,
@@ -6,7 +8,6 @@ from api.v1.assessments.views import (
     TestSessionResultView,
     TestStartView,
 )
-from django.urls import path
 
 urlpatterns = [
     path(

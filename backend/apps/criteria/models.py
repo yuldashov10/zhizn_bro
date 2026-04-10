@@ -98,3 +98,116 @@ class Criterion(models.Model):
     def is_system(self) -> bool:
         """Проверяет является ли критерий системным."""
         return self.user is None and self.is_default
+
+
+class HardStopSuggestion(models.Model):
+    """
+    Предложение пользователя добавить новый системный Hard Stop.
+    Рассматривается администратором вручную.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "На рассмотрении"
+        APPROVED = "approved", "Одобрено"
+        REJECTED = "rejected", "Отклонено"
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="hard_stop_suggestions",
+        verbose_name="Пользователь",
+    )
+    text = models.TextField(
+        verbose_name="Предложение",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Статус",
+    )
+    admin_note = models.TextField(
+        blank=True,
+        verbose_name="Комментарий администратора",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата предложения",
+    )
+
+    class Meta:
+        verbose_name = "Предложение Hard Stop"
+        verbose_name_plural = "Предложения Hard Stop"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return (
+            f"@{self.user.username or self.user.telegram_id} "
+            f"— {self.text[:50]}"
+        )
+
+
+class UserHardStopSettings(models.Model):
+    """
+    Пользовательские настройки Hard Stop.
+    Хранит включён/выключен системный Hard Stop для конкретного пользователя.
+    """
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="hard_stop_settings",
+        verbose_name="Пользователь",
+    )
+    hard_stop = models.ForeignKey(
+        HardStop,
+        on_delete=models.CASCADE,
+        related_name="user_settings",
+        verbose_name="Hard Stop",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+    )
+
+    class Meta:
+        verbose_name = "Настройки Hard Stop"
+        verbose_name_plural = "Настройки Hard Stops"
+        unique_together = [["user", "hard_stop"]]
+
+    def __str__(self) -> str:
+        status = "вкл" if self.is_active else "выкл"
+        return f"{self.user} — {self.hard_stop.name} [{status}]"
+
+
+class UserCriterionSettings(models.Model):
+    """
+    Пользовательские настройки критерия.
+    Хранит включён/выключен критерий для конкретного пользователя.
+    """
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="criterion_settings",
+        verbose_name="Пользователь",
+    )
+    criterion = models.ForeignKey(
+        Criterion,
+        on_delete=models.CASCADE,
+        related_name="user_settings",
+        verbose_name="Критерий",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+    )
+
+    class Meta:
+        verbose_name = "Настройки критерия"
+        verbose_name_plural = "Настройки критериев"
+        unique_together = [["user", "criterion"]]
+
+    def __str__(self) -> str:
+        status = "вкл" if self.is_active else "выкл"
+        return f"{self.user} — {self.criterion.name} [{status}]"

@@ -1,10 +1,4 @@
 from ai import AIAnalysisService
-from api.v1.events.serializers import (
-    EventCreateSerializer,
-    EventCriterionScoreConfirmSerializer,
-    EventDetailSerializer,
-    EventSerializer,
-)
 from core.exceptions.base import ProviderError
 from core.filters import EventFilter
 from core.pagination import StandardPagination
@@ -15,6 +9,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.events.serializers import (
+    EventCreateSerializer,
+    EventCriterionScoreConfirmSerializer,
+    EventDetailSerializer,
+    EventSerializer,
+)
 from apps.candidates.models import Candidate
 from apps.events.models import Event, EventCriterionScore
 

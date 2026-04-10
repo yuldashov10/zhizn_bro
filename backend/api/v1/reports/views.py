@@ -1,7 +1,3 @@
-from api.v1.reports.serializers import (
-    ReportGenerateSerializer,
-    ReportLogSerializer,
-)
 from core.filters import ReportFilter
 from core.pagination import SmallPagination
 from django.shortcuts import get_object_or_404
@@ -10,6 +6,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.reports.serializers import (
+    ReportGenerateSerializer,
+    ReportLogSerializer,
+)
 from apps.candidates.models import Candidate
 from apps.reports.models import ReportLog
 from apps.reports.services.report import ReportService

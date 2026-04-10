@@ -79,28 +79,28 @@ class AIAnalysisService:
         }
 
     @classmethod
-    def _get_active_criteria(cls, user: User) -> list[Criterion]:
-        """Возвращает активные критерии пользователя."""
-        from django.db.models import Q
+    def _get_active_criteria(cls, user) -> list[Criterion]:
+        """Возвращает активные критерии с учётом настроек пользователя."""
+        from apps.criteria.models import UserCriterionSettings
 
-        return list(
-            Criterion.objects.filter(
-                Q(is_default=True) | Q(user=user),
-                is_active=True,
-            )
-        )
+        all_criteria = list(Criterion.objects.filter(is_default=True))
+        user_settings = {
+            s.criterion_id: s.is_active
+            for s in UserCriterionSettings.objects.filter(user=user)
+        }
+        return [c for c in all_criteria if user_settings.get(c.pk, True)]
 
     @classmethod
-    def _get_active_hard_stops(cls, user: User) -> list[HardStop]:
-        """Возвращает активные Hard Stops пользователя."""
-        from django.db.models import Q
+    def _get_active_hard_stops(cls, user) -> list[HardStop]:
+        """Возвращает активные Hard Stops с учётом настроек пользователя."""
+        from apps.criteria.models import UserHardStopSettings
 
-        return list(
-            HardStop.objects.filter(
-                Q(is_default=True) | Q(user=user),
-                is_active=True,
-            )
-        )
+        all_hard_stops = list(HardStop.objects.filter(is_default=True))
+        user_settings = {
+            s.hard_stop_id: s.is_active
+            for s in UserHardStopSettings.objects.filter(user=user)
+        }
+        return [h for h in all_hard_stops if user_settings.get(h.pk, True)]
 
     @classmethod
     def _save_result(
