@@ -86,6 +86,27 @@ logs:
 restart:
 	docker-compose down && docker-compose up -d
 
+# ── Docker Prod ──────────────────────────────────────────────────────────────────
+deploy:
+	docker-compose pull
+	docker-compose up -d --build
+	docker-compose exec web python manage.py migrate
+	docker-compose exec web python manage.py collectstatic --noinput
+	docker-compose exec web python manage.py setup_periodic_tasks
+	@echo "✅ Деплой завершён!"
+
+prod-logs:
+	docker-compose logs -f web bot celery
+
+prod-shell:
+	docker-compose exec web python manage.py shell
+
+prod-migrate:
+	docker-compose exec web python manage.py migrate
+
+prod-createsuperuser:
+	docker-compose exec web python manage.py createsuperuser
+
 # ── Утилиты ───────────────────────────────────────────────────────────────────
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
