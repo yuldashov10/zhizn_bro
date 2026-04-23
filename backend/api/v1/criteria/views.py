@@ -9,12 +9,12 @@ from api.v1.criteria.serializers import (
     HardStopSerializer,
     HardStopSuggestionSerializer,
 )
-from apps.criteria.models import Criterion, HardStop, UserCriterionSettings
+from apps.criteria.models import Criterion, HardStop
 from apps.criteria.services import CriteriaWeightService
 
 
 class HardStopListView(APIView):
-    """Список Hard Stops — системных и пользовательских."""
+    """Список Hard Stops - системных и пользовательских."""
 
     def get(self, request: Request) -> Response:
         from apps.criteria.models import UserHardStopSettings
@@ -54,7 +54,10 @@ class HardStopToggleView(APIView):
             defaults={"is_active": True},
         )
 
-        if not created:
+        if created:
+            settings.is_active = False
+            settings.save(update_fields=["is_active"])
+        else:
             settings.is_active = not settings.is_active
             settings.save(update_fields=["is_active"])
 
@@ -137,17 +140,20 @@ class CriterionToggleView(APIView):
             defaults={"is_active": True},
         )
 
-        if not created:
+        if created:
+            # Первое нажатие - пытаемся выключить
+            error = self._check_can_disable(request.user)
+            if error:
+                settings.delete()
+                return error
+            settings.is_active = False
+            settings.save(update_fields=["is_active"])
+        else:
+            # Повторное нажатие - переключаем
             if settings.is_active:
-                active_criteria = self._get_active_criteria(request.user)
-                if not CriteriaWeightService.can_disable(active_criteria):
-                    return Response(
-                        {
-                            "detail": f"Нельзя отключить — минимум "
-                            f"{CriteriaWeightService.MIN_CRITERIA} критерия."
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+                error = self._check_can_disable(request.user)
+                if error:
+                    return error
             settings.is_active = not settings.is_active
             settings.save(update_fields=["is_active"])
 
@@ -170,7 +176,24 @@ class CriterionToggleView(APIView):
             }
         )
 
+    def _check_can_disable(self, user) -> Response | None:
+        """
+        Проверяет можно ли отключить ещё один критерий.
+        Возвращает Response с ошибкой если нельзя, иначе None.
+        """
+        active_criteria = self._get_active_criteria(user)
+        if not CriteriaWeightService.can_disable(active_criteria):
+            return Response(
+                {
+                    "detail": f"Нельзя отключить - минимум "
+                    f"{CriteriaWeightService.MIN_CRITERIA} критерия."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
     def _get_active_criteria(self, user) -> list:
+        from apps.criteria.models import UserCriterionSettings
 
         all_criteria = list(Criterion.objects.filter(is_default=True))
         user_settings = {
