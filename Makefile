@@ -43,7 +43,7 @@ setup_tasks:
 
 # ── Тесты ─────────────────────────────────────────────────────────────────────
 test:
-	cd backend && $(PYTHON) -m pytest tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 test-cov:
 	cd backend && $(PYTHON) -m pytest tests/ -v --cov=apps --cov-report=html
