@@ -144,6 +144,7 @@ cover/
 #########################
 ##### Django, Flask, Scrapy, Sphinx, PyBuilder, Jupyter Notebook, IPython
 #########################
+logs/
 *.log
 local_settings.py
 db.sqlite3

@@ -185,6 +185,8 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exceptions.handlers.custom_exception_handler",
 }
 
+LOGS_DIR = BASE_DIR.parent / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -201,7 +203,7 @@ LOGGING = {
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "logs/django.log",
+            "filename": str(LOGS_DIR / "django.log"),
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 5,
             "formatter": "verbose",
