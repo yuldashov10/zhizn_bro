@@ -22,7 +22,7 @@ jobs:
         run: pip install poetry==2.3.3
 
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --no-root
 
       - name: Run isort
         run: poetry run isort bot backend tests --check-only
@@ -60,7 +60,7 @@ jobs:
           --health-retries 5
 
     env:
-      SECRET_KEY:           test-secret-key-for-ci
+      SECRET_KEY:           ${{ secrets.SECRET_KEY }}
       DEBUG:                "True"
       ALLOWED_HOSTS:        localhost,127.0.0.1
       DB_ENGINE:            django.db.backends.postgresql
@@ -70,10 +70,12 @@ jobs:
       DB_HOST:              localhost
       DB_PORT:              5432
       REDIS_URL:            redis://localhost:6379/0
-      BOT_TOKEN:            fake-bot-token
-      ADMIN_TELEGRAM_ID:    "123456789"
+      BOT_TOKEN:            ${{ secrets.BOT_TOKEN }}
+      ADMIN_TELEGRAM_ID:    ${{ secrets.ADMIN_TELEGRAM_ID }}
       AI_PROVIDER:          groq
-      GROQ_API_KEY:         fake-groq-key
+      GROQ_API_KEY:         ${{ secrets.GROQ_API_KEY }}
+      SENTRY_DSN:             ""
+      REPORT_RETENTION_DAYS:  "30"
       DJANGO_SETTINGS_MODULE: backend.settings
 
     steps:
@@ -93,7 +95,7 @@ jobs:
         run: pip install poetry==2.3.3
 
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --no-root
 
       - name: Run migrations
         working-directory: backend
