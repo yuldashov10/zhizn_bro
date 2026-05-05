@@ -46,7 +46,7 @@ test:
 	$(PYTHON) -m pytest tests/ -v
 
 test-cov:
-	cd backend && $(PYTHON) -m pytest tests/ -v --cov=apps --cov-report=html
+	$(PYTHON) -m pytest tests/ -v --cov=apps --cov-report=html
 	@echo "Coverage report: backend/htmlcov/index.html"
 
 # ── Качество кода ─────────────────────────────────────────────────────────────
