@@ -1,0 +1,203 @@
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from api.v1.criteria.serializers import (
+    CriterionSerializer,
+    HardStopSerializer,
+    HardStopSuggestionSerializer,
+)
+from apps.criteria.models import Criterion, HardStop
+from apps.criteria.services import CriteriaWeightService
+
+
+class HardStopListView(APIView):
+    """Список Hard Stops - системных и пользовательских."""
+
+    def get(self, request: Request) -> Response:
+        from apps.criteria.models import UserHardStopSettings
+
+        hard_stops = HardStop.objects.filter(is_default=True)
+        user_settings = {
+            s.hard_stop_id: s.is_active
+            for s in UserHardStopSettings.objects.filter(user=request.user)
+        }
+        serializer = HardStopSerializer(
+            hard_stops,
+            many=True,
+            context={"user_settings": user_settings},
+        )
+        return Response(serializer.data)
+
+
+class HardStopDetailView(APIView):
+    """Детали и управление конкретным Hard Stop."""
+
+    def get(self, request: Request, pk: int) -> Response:
+        hard_stop = get_object_or_404(HardStop, pk=pk, is_default=True)
+        return Response(HardStopSerializer(hard_stop).data)
+
+
+class HardStopToggleView(APIView):
+    """Включить / выключить Hard Stop для пользователя."""
+
+    def post(self, request: Request, pk: int) -> Response:
+        hard_stop = get_object_or_404(HardStop, pk=pk, is_default=True)
+
+        from apps.criteria.models import UserHardStopSettings
+
+        settings, created = UserHardStopSettings.objects.get_or_create(
+            user=request.user,
+            hard_stop=hard_stop,
+            defaults={"is_active": True},
+        )
+
+        if created:
+            settings.is_active = False
+            settings.save(update_fields=["is_active"])
+        else:
+            settings.is_active = not settings.is_active
+            settings.save(update_fields=["is_active"])
+
+        return Response(
+            {
+                "id": hard_stop.pk,
+                "name": hard_stop.name,
+                "is_active": settings.is_active,
+            }
+        )
+
+
+class HardStopSuggestView(APIView):
+    """Предложить новый Hard Stop."""
+
+    def post(self, request: Request) -> Response:
+        serializer = HardStopSuggestionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CriterionListView(APIView):
+    """Список системных критериев с эффективными весами."""
+
+    def get(self, request: Request) -> Response:
+        from apps.criteria.models import UserCriterionSettings
+
+        criteria = Criterion.objects.filter(is_default=True)
+        user_settings = {
+            s.criterion_id: s.is_active
+            for s in UserCriterionSettings.objects.filter(user=request.user)
+        }
+
+        active_criteria = [
+            c for c in criteria if user_settings.get(c.pk, True)
+        ]
+        try:
+            weights = CriteriaWeightService.get_effective_weights(
+                active_criteria
+            )
+        except ValueError:
+            weights = {}
+
+        serializer = CriterionSerializer(
+            criteria,
+            many=True,
+            context={
+                "user_settings": user_settings,
+                "weights": weights,
+            },
+        )
+        return Response(serializer.data)
+
+
+class CriterionDetailView(APIView):
+    """Детали критерия."""
+
+    def get(self, request: Request, pk: int) -> Response:
+        criterion = get_object_or_404(Criterion, pk=pk, is_default=True)
+        return Response(
+            CriterionSerializer(
+                criterion,
+                context={"request": request},
+            ).data
+        )
+
+
+class CriterionToggleView(APIView):
+    """Включить / выключить критерий для пользователя."""
+
+    def post(self, request: Request, pk: int) -> Response:
+        criterion = get_object_or_404(Criterion, pk=pk, is_default=True)
+
+        from apps.criteria.models import UserCriterionSettings
+
+        settings, created = UserCriterionSettings.objects.get_or_create(
+            user=request.user,
+            criterion=criterion,
+            defaults={"is_active": True},
+        )
+
+        if created:
+            # Первое нажатие - пытаемся выключить
+            error = self._check_can_disable(request.user)
+            if error:
+                settings.delete()
+                return error
+            settings.is_active = False
+            settings.save(update_fields=["is_active"])
+        else:
+            # Повторное нажатие - переключаем
+            if settings.is_active:
+                error = self._check_can_disable(request.user)
+                if error:
+                    return error
+            settings.is_active = not settings.is_active
+            settings.save(update_fields=["is_active"])
+
+        active_criteria = self._get_active_criteria(request.user)
+        try:
+            weights = CriteriaWeightService.get_effective_weights(
+                active_criteria
+            )
+        except ValueError:
+            weights = {}
+
+        return Response(
+            {
+                "id": criterion.pk,
+                "name": criterion.name,
+                "is_active": settings.is_active,
+                "effective_weight": (
+                    f"{weights.get(criterion.name, 0) * 100:.1f}%"
+                ),
+            }
+        )
+
+    def _check_can_disable(self, user) -> Response | None:
+        """
+        Проверяет можно ли отключить ещё один критерий.
+        Возвращает Response с ошибкой если нельзя, иначе None.
+        """
+        active_criteria = self._get_active_criteria(user)
+        if not CriteriaWeightService.can_disable(active_criteria):
+            return Response(
+                {
+                    "detail": f"Нельзя отключить - минимум "
+                    f"{CriteriaWeightService.MIN_CRITERIA} критерия."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return None
+
+    def _get_active_criteria(self, user) -> list:
+        from apps.criteria.models import UserCriterionSettings
+
+        all_criteria = list(Criterion.objects.filter(is_default=True))
+        user_settings = {
+            s.criterion_id: s.is_active
+            for s in UserCriterionSettings.objects.filter(user=user)
+        }
+        return [c for c in all_criteria if user_settings.get(c.pk, True)]
