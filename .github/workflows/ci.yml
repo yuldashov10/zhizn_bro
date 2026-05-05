@@ -105,7 +105,6 @@ jobs:
         run: poetry run python manage.py migrate
 
       - name: Run tests
-        working-directory: backend
         run: |
           poetry run pytest tests/ -v \
             --cov=apps \
