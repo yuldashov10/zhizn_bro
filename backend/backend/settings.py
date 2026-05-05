@@ -185,7 +185,7 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exceptions.handlers.custom_exception_handler",
 }
 
-LOGS_DIR = BASE_DIR.parent / "logs"
+LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 LOGGING = {
     "version": 1,
