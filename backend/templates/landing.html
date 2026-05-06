@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Жизнь БРО — Без Розовых Очков</title>
+    <meta name="description" content="Система рационального принятия решений в сложных жизненных ситуациях. Без эмоций. Без иллюзий. Только факты.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --purple:     #534AB7;
+            --purple-d:   #3C3489;
+            --purple-l:   #EEEDFE;
+            --green:      #0F6E56;
+            --green-l:    #E1F5EE;
+            --text:       #2C2C2A;
+            --gray:       #444441;
+            --gray-l:     #F1EFE8;
+            --gray-m:     #D3D1C7;
+            --white:      #FFFFFF;
+            --red:        #A32D2D;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            background: var(--white);
+            overflow-x: hidden;
+        }
+
+        /* ── NAVBAR ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 4rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--gray-m);
+            transition: all .3s;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            text-decoration: none;
+        }
+
+        .nav-logo img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .nav-logo-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem;
+            letter-spacing: .08em;
+            color: var(--purple);
+            line-height: 1;
+        }
+
+        .nav-logo-sub {
+            font-size: .55rem;
+            font-weight: 500;
+            letter-spacing: .15em;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-size: .85rem;
+            font-weight: 500;
+            letter-spacing: .06em;
+            color: var(--gray);
+            text-transform: uppercase;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover { color: var(--purple); }
+
+        .nav-cta {
+            background: var(--purple);
+            color: var(--white) !important;
+            padding: .55rem 1.4rem;
+            border-radius: 4px;
+            transition: background .2s !important;
+        }
+
+        .nav-cta:hover { background: var(--purple-d) !important; color: var(--white) !important; }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            padding: 8rem 4rem 4rem;
+            position: relative;
+            overflow: hidden;
+            background: var(--white);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(ellipse, var(--purple-l) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: var(--green-l);
+            color: var(--green);
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            padding: .4rem 1rem;
+            border-radius: 100px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(15,110,86,.2);
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.4); }
+        }
+
+        .hero-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3.5rem, 7vw, 6.5rem);
+            line-height: .95;
+            letter-spacing: .03em;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title span {
+            color: var(--purple);
+            position: relative;
+        }
+
+        .hero-title span::after {
+            content: '';
+            position: absolute;
+            bottom: 4px; left: 0; right: 0;
+            height: 4px;
+            background: var(--purple);
+            opacity: .3;
+        }
+
+        .hero-sub {
+            font-size: 1.05rem;
+            font-weight: 300;
+            line-height: 1.7;
+            color: var(--gray);
+            max-width: 480px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            background: var(--purple);
+            color: var(--white);
+            text-decoration: none;
+            font-size: .9rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            padding: .9rem 2rem;
+            border-radius: 6px;
+            transition: all .2s;
+            border: 2px solid var(--purple);
+        }
+
+        .btn-primary:hover {
+            background: var(--purple-d);
+            border-color: var(--purple-d);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(83,74,183,.3);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            background: transparent;
+            color: var(--purple);
+            text-decoration: none;
+            font-size: .9rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            padding: .9rem 2rem;
+            border-radius: 6px;
+            border: 2px solid var(--purple);
+            transition: all .2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--purple-l);
+            transform: translateY(-2px);
+        }
+
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero-card {
+            background: var(--white);
+            border: 1px solid var(--gray-m);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 340px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.08);
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .hero-card-header {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-m);
+        }
+
+        .hero-card-avatar {
+            width: 44px; height: 44px;
+            background: var(--purple-l);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .hero-card-name {
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .hero-card-status {
+            font-size: .75rem;
+            color: var(--gray);
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            color: var(--green);
+            line-height: 1;
+        }
+
+        .score-label {
+            font-size: .75rem;
+            color: var(--gray);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .score-bar-wrap {
+            background: var(--gray-l);
+            border-radius: 100px;
+            height: 8px;
+            margin: .75rem 0;
+            overflow: hidden;
+        }
+
+        .score-bar {
+            height: 100%;
+            width: 72%;
+            background: linear-gradient(90deg, var(--green) 0%, #16a880 100%);
+            border-radius: 100px;
+            animation: grow 2s ease-out;
+        }
+
+        @keyframes grow {
+            from { width: 0; }
+            to { width: 72%; }
+        }
+
+        .criteria-list {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .criteria-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: .8rem;
+        }
+
+        .criteria-name { color: var(--gray); }
+
+        .criteria-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: .8rem;
+        }
+
+        .criteria-score.pos { color: var(--green); }
+        .criteria-score.neg { color: var(--red); }
+
+        .hero-badge-float {
+            position: absolute;
+            background: var(--white);
+            border: 1px solid var(--gray-m);
+            border-radius: 10px;
+            padding: .75rem 1rem;
+            font-size: .78rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,.08);
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .badge-warn {
+            top: -20px; right: -30px;
+            color: var(--red);
+            border-color: rgba(163,45,45,.2);
+            background: #FFF5F5;
+            animation: float 5s ease-in-out infinite .5s;
+        }
+
+        .badge-ok {
+            bottom: 20px; left: -40px;
+            color: var(--green);
+            border-color: rgba(15,110,86,.2);
+            background: var(--green-l);
+            animation: float 7s ease-in-out infinite 1s;
+        }
+
+        /* ── STATS ── */
+        .stats {
+            background: var(--purple);
+            padding: 3rem 4rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: var(--white);
+        }
+
+        .stat-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            letter-spacing: .05em;
+            line-height: 1;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: .8rem;
+            font-weight: 300;
+            opacity: .7;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-top: .25rem;
+        }
+
+        /* ── SECTION ── */
+        section {
+            padding: 6rem 4rem;
+        }
+
+        .section-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            font-weight: 500;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: var(--purple);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 1;
+            letter-spacing: .03em;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-desc {
+            font-size: 1rem;
+            font-weight: 300;
+            line-height: 1.8;
+            color: var(--gray);
+            max-width: 560px;
+        }
+
+        /* ── PROBLEM ── */
+        .problem {
+            background: var(--gray-l);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: center;
+        }
+
+        .problem-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .problem-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            border-left: 4px solid var(--red);
+            box-shadow: 0 4px 12px rgba(0,0,0,.04);
+            transition: transform .2s;
+        }
+
+        .problem-card:hover { transform: translateX(4px); }
+
+        .problem-card-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+        .problem-card-title {
+            font-weight: 600;
+            font-size: .9rem;
+            margin-bottom: .25rem;
+        }
+
+        .problem-card-desc {
+            font-size: .82rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* ── FEATURES ── */
+        .features {
+            background: var(--white);
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .features-header .section-desc {
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--gray-l);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all .3s;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--purple);
+            transform: scaleX(0);
+            transition: transform .3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--purple-l);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(83,74,183,.1);
+        }
+
+        .feature-card:hover::before { transform: scaleX(1); }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: .5rem;
+            color: var(--text);
+        }
+
+        .feature-desc {
+            font-size: .85rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* ── HOW IT WORKS ── */
+        .how {
+            background: var(--purple);
+            color: var(--white);
+        }
+
+        .how .section-tag { color: rgba(255,255,255,.6); }
+        .how .section-title { color: var(--white); }
+        .how .section-desc { color: rgba(255,255,255,.7); }
+
+        .how-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .how-header .section-desc { margin: 0 auto; }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 2.5rem;
+            left: calc(16.66% + 1rem);
+            right: calc(16.66% + 1rem);
+            height: 1px;
+            background: rgba(255,255,255,.2);
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 5rem; height: 5rem;
+            background: rgba(255,255,255,.1);
+            border: 2px solid rgba(255,255,255,.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--white);
+            margin: 0 auto 1.5rem;
+            position: relative;
+            z-index: 1;
+            transition: all .3s;
+        }
+
+        .step:hover .step-number {
+            background: rgba(255,255,255,.2);
+            transform: scale(1.1);
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: .5rem;
+            color: var(--white);
+        }
+
+        .step-desc {
+            font-size: .85rem;
+            color: rgba(255,255,255,.65);
+            line-height: 1.6;
+        }
+
+        /* ── MODULES ── */
+        .modules {
+            background: var(--gray-l);
+        }
+
+        .modules-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .modules-header .section-desc { margin: 0 auto; }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .module-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            border: 1px solid var(--gray-m);
+            transition: all .3s;
+        }
+
+        .module-card:hover {
+            border-color: var(--purple);
+            box-shadow: 0 8px 24px rgba(83,74,183,.1);
+        }
+
+        .module-card.coming-soon {
+            opacity: .6;
+            cursor: default;
+        }
+
+        .module-card.coming-soon:hover {
+            border-color: var(--gray-m);
+            box-shadow: none;
+        }
+
+        .module-icon {
+            width: 56px; height: 56px;
+            background: var(--purple-l);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .module-icon.green { background: var(--green-l); }
+
+        .module-badge {
+            display: inline-block;
+            font-size: .65rem;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: .2rem .6rem;
+            border-radius: 100px;
+            margin-bottom: .5rem;
+        }
+
+        .module-badge.active {
+            background: var(--green-l);
+            color: var(--green);
+        }
+
+        .module-badge.soon {
+            background: var(--gray-l);
+            color: var(--gray);
+        }
+
+        .module-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: .5rem;
+        }
+
+        .module-desc {
+            font-size: .84rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        /* ── CTA ── */
+        .cta-section {
+            background: var(--white);
+            text-align: center;
+            padding: 8rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(ellipse, var(--purple-l) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-section .section-title {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section .section-desc {
+            margin: 0 auto 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: var(--text);
+            color: rgba(255,255,255,.6);
+            padding: 3rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: .75rem;
+        }
+
+        .footer-logo-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: .08em;
+            color: var(--white);
+        }
+
+        .footer-tagline {
+            font-size: .82rem;
+            line-height: 1.5;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,.5);
+            text-decoration: none;
+            font-size: .82rem;
+            transition: color .2s;
+        }
+
+        .footer-links a:hover { color: var(--white); }
+
+        /* ── ANIMATIONS ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity .6s ease, transform .6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            nav { padding: 1rem 2rem; }
+            .nav-links { display: none; }
+            .hero { grid-template-columns: 1fr; padding: 7rem 2rem 4rem; }
+            .hero-visual { display: none; }
+            .stats { grid-template-columns: repeat(2, 1fr); padding: 3rem 2rem; }
+            section { padding: 4rem 2rem; }
+            .problem { grid-template-columns: 1fr; gap: 3rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .steps::before { display: none; }
+            .modules-grid { grid-template-columns: 1fr; }
+            footer { grid-template-columns: 1fr; }
+            .footer-links { flex-wrap: wrap; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+    <a href="/" class="nav-logo">
+        <img src="/static/img/logo.jpg" alt="Жизнь БРО" onerror="this.style.display='none'">
+        <div>
+            <div class="nav-logo-text">Жизнь БРО</div>
+            <div class="nav-logo-sub">Без Розовых Очков</div>
+        </div>
+    </a>
+    <ul class="nav-links">
+        <li><a href="#problem">Проблема</a></li>
+        <li><a href="#features">Возможности</a></li>
+        <li><a href="#how">Как работает</a></li>
+        <li><a href="#modules">Модули</a></li>
+        <li><a href="https://t.me/zhizn_bro_bot" class="nav-cta">Открыть бота</a></li>
+    </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">Работает на AI · Система 2 по Канеману</div>
+        <h1 class="hero-title">
+            Решения<br>
+            без <span>иллюзий</span>
+        </h1>
+        <p class="hero-sub">
+            Telegram-бот который помогает принимать взвешенные решения
+            в сложных жизненных ситуациях. Анализирует факты, выявляет
+            паттерны и предупреждает о когнитивных искажениях.
+        </p>
+        <div class="hero-actions">
+            <a href="https://t.me/zhizn_bro_bot" class="btn-primary">
+                ✈ Открыть в Telegram
+            </a>
+            <a href="#how" class="btn-secondary">
+                Как это работает →
+            </a>
+        </div>
+    </div>
+
+    <div class="hero-visual">
+        <div class="hero-card">
+            <div class="hero-card-header">
+                <div class="hero-card-avatar">👤</div>
+                <div>
+                    <div class="hero-card-name">Анализ кандидата</div>
+                    <div class="hero-card-status">На основе 12 событий</div>
+                </div>
+            </div>
+            <div class="score-display">
+                <div class="score-number">72</div>
+                <div class="score-label">Итоговый скор / 100</div>
+                <div class="score-bar-wrap">
+                    <div class="score-bar"></div>
+                </div>
+            </div>
+            <div class="criteria-list">
+                <div class="criteria-item">
+                    <span class="criteria-name">Доверие</span>
+                    <span class="criteria-score pos">+1.4</span>
+                </div>
+                <div class="criteria-item">
+                    <span class="criteria-name">Уважение</span>
+                    <span class="criteria-score pos">+0.8</span>
+                </div>
+                <div class="criteria-item">
+                    <span class="criteria-name">Открытость</span>
+                    <span class="criteria-score neg">−0.5</span>
+                </div>
+                <div class="criteria-item">
+                    <span class="criteria-name">Эмоц. стабильность</span>
+                    <span class="criteria-score pos">+1.1</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-badge-float badge-warn">
+            ⚠ Тревожная гиперреакция
+        </div>
+        <div class="hero-badge-float badge-ok">
+            ✅ Hard Stops: чисто
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="stat-item reveal">
+        <span class="stat-number">5</span>
+        <span class="stat-label">Критериев оценки</span>
+    </div>
+    <div class="stat-item reveal">
+        <span class="stat-number">AI</span>
+        <span class="stat-label">Анализ событий</span>
+    </div>
+    <div class="stat-item reveal">
+        <span class="stat-number">100</span>
+        <span class="stat-label">Балльная шкала</span>
+    </div>
+    <div class="stat-item reveal">
+        <span class="stat-number">0</span>
+        <span class="stat-label">Розовых очков</span>
+    </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+    <div>
+        <span class="section-tag reveal">// Проблема</span>
+        <h2 class="section-title reveal">Почему мы<br>принимаем<br>плохие решения?</h2>
+        <p class="section-desc reveal">
+            Система 1 (эмоции) постоянно саботирует Систему 2 (разум).
+            Мы видим то что хотим видеть, а не то что есть на самом деле.
+            Жизнь БРО — это инструмент который возвращает контроль разуму.
+        </p>
+    </div>
+    <div class="problem-cards">
+        <div class="problem-card reveal">
+            <div class="problem-card-icon">🌹</div>
+            <div>
+                <div class="problem-card-title">Эффект ореола</div>
+                <div class="problem-card-desc">Один позитивный аспект затмевает реальные недостатки. Красота, харизма или первое впечатление искажают оценку.</div>
+            </div>
+        </div>
+        <div class="problem-card reveal">
+            <div class="problem-card-icon">🎭</div>
+            <div>
+                <div class="problem-card-title">Когнитивные искажения</div>
+                <div class="problem-card-desc">Тревожный тип привязанности видит угрозы там где их нет. Избегающий не замечает реальных проблем.</div>
+            </div>
+        </div>
+        <div class="problem-card reveal">
+            <div class="problem-card-icon">📉</div>
+            <div>
+                <div class="problem-card-title">Слепые пятна</div>
+                <div class="problem-card-desc">Мы не замечаем паттернов которые повторяются снова и снова. История учит нас только если мы её записываем.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+    <div class="features-header">
+        <span class="section-tag reveal">// Возможности</span>
+        <h2 class="section-title reveal">Что умеет<br>Жизнь БРО</h2>
+        <p class="section-desc reveal">
+            Полноценная система анализа с AI, скорингом и детектором когнитивных искажений.
+        </p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card reveal">
+            <span class="feature-icon">🤖</span>
+            <div class="feature-title">AI-анализ событий</div>
+            <div class="feature-desc">Описываете событие своими словами — AI определяет критерий, выставляет балл и предупреждает об искажениях.</div>
+        </div>
+        <div class="feature-card reveal">
+            <span class="feature-icon">📊</span>
+            <div class="feature-title">Взвешенный скоринг</div>
+            <div class="feature-desc">Каждый критерий имеет свой вес. Итоговый скор от 0 до 100 на основе реальных фактов, а не ощущений.</div>
+        </div>
+        <div class="feature-card reveal">
+            <span class="feature-icon">🚨</span>
+            <div class="feature-title">Hard Stops</div>
+            <div class="feature-desc">Абсолютные фильтры которые сразу исключают несовместимые варианты. Никакого компромисса с принципами.</div>
+        </div>
+        <div class="feature-card reveal">
+            <span class="feature-icon">🧠</span>
+            <div class="feature-title">Профиль привязанности</div>
+            <div class="feature-desc">Тест определяет ваш тип привязанности и корректирует анализ с учётом личных когнитивных искажений.</div>
+        </div>
+        <div class="feature-card reveal">
+            <span class="feature-icon">📈</span>
+            <div class="feature-title">Динамика во времени</div>
+            <div class="feature-desc">Отслеживает как меняется скор со временем. Выявляет паттерны нестабильности и предупреждает об откатах.</div>
+        </div>
+        <div class="feature-card reveal">
+            <span class="feature-icon">📄</span>
+            <div class="feature-title">Отчёты PDF/Excel/PNG</div>
+            <div class="feature-desc">Полные отчёты по каждому кандидату с историей событий, динамикой и итоговыми выводами.</div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+    <div class="how-header">
+        <span class="section-tag reveal">// Как работает</span>
+        <h2 class="section-title reveal">Три простых шага</h2>
+        <p class="section-desc reveal">
+            Без сложных настроек. Просто пишите что происходит — система делает остальное.
+        </p>
+    </div>
+    <div class="steps">
+        <div class="step reveal">
+            <div class="step-number">01</div>
+            <div class="step-title">Опишите событие</div>
+            <div class="step-desc">Напишите что произошло своими словами. Никаких форм и галочек — просто текст как другу.</div>
+        </div>
+        <div class="step reveal">
+            <div class="step-number">02</div>
+            <div class="step-title">AI анализирует</div>
+            <div class="step-desc">Система определяет критерий, выставляет балл и проверяет на когнитивные искажения с учётом вашего профиля.</div>
+        </div>
+        <div class="step reveal">
+            <div class="step-number">03</div>
+            <div class="step-title">Вы решаете</div>
+            <div class="step-desc">Подтверждаете или корректируете оценку. Система накапливает данные и строит объективную картину.</div>
+        </div>
+    </div>
+</section>
+
+<!-- MODULES -->
+<section class="modules" id="modules">
+    <div class="modules-header">
+        <span class="section-tag reveal">// Модули</span>
+        <h2 class="section-title reveal">Для разных<br>жизненных ситуаций</h2>
+        <p class="section-desc reveal">
+            Жизнь БРО — это платформа рационального выбора. Сейчас доступен первый модуль, остальные в разработке.
+        </p>
+    </div>
+    <div class="modules-grid">
+        <div class="module-card reveal">
+            <div class="module-icon">❤️</div>
+            <div>
+                <span class="module-badge active">Доступно</span>
+                <div class="module-title">Отношения</div>
+                <div class="module-desc">Анализ партнёров, выявление паттернов поведения, детектор манипуляций и Hard Stops для несовместимых вариантов.</div>
+            </div>
+        </div>
+        <div class="module-card coming-soon reveal">
+            <div class="module-icon green">💼</div>
+            <div>
+                <span class="module-badge soon">Скоро</span>
+                <div class="module-title">Карьера</div>
+                <div class="module-desc">Анализ офферов, оценка работодателей, сравнение условий и выявление токсичных паттернов в компаниях.</div>
+            </div>
+        </div>
+        <div class="module-card coming-soon reveal">
+            <div class="module-icon green">💰</div>
+            <div>
+                <span class="module-badge soon">Скоро</span>
+                <div class="module-title">Финансы</div>
+                <div class="module-desc">Рациональный анализ крупных покупок и инвестиций без эмоциональных импульсных решений.</div>
+            </div>
+        </div>
+        <div class="module-card coming-soon reveal">
+            <div class="module-icon">🌍</div>
+            <div>
+                <span class="module-badge soon">Скоро</span>
+                <div class="module-title">Переезд</div>
+                <div class="module-desc">Сравнение городов и стран по объективным критериям: работа, стоимость жизни, качество среды.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <span class="section-tag reveal">// Начать</span>
+    <h2 class="section-title reveal">Готов принимать<br>решения без иллюзий?</h2>
+    <p class="section-desc reveal">
+        Запусти бота и добавь первого кандидата уже сейчас. Бесплатно.
+    </p>
+    <div class="cta-actions reveal">
+        <a href="https://t.me/zhizn_bro_bot" class="btn-primary">
+            ✈ Открыть @zhizn_bro_bot
+        </a>
+        <a href="mailto:hello@zhizn-bro.ru" class="btn-secondary">
+            Написать нам
+        </a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div>
+        <div class="footer-logo">
+            <img src="/static/img/logo.png" alt="БРО" width="32" onerror="this.style.display='none'">
+            <span class="footer-logo-text">Жизнь БРО</span>
+        </div>
+        <div class="footer-tagline">
+            Система рационального принятия решений.<br>
+            Без розовых очков © 2026
+        </div>
+    </div>
+    <ul class="footer-links">
+        <li><a href="https://t.me/zhizn_bro_bot">Telegram бот</a></li>
+        <li><a href="#problem">О проекте</a></li>
+        <li><a href="mailto:hello@zhizn-bro.ru">Контакты</a></li>
+    </ul>
+</footer>
+
+<script>
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('visible');
+                }, i * 80);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('nav');
+        nav.style.boxShadow = window.scrollY > 20
+            ? '0 4px 20px rgba(0,0,0,.08)'
+            : 'none';
+    });
+</script>
+</body>
+</html>

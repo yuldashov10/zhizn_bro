@@ -77,7 +77,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -344,13 +344,13 @@ if SENTRY_DSN:
                 monitor_beat_tasks=True,
             ),
             LoggingIntegration(
-                level=logging.INFO,  # INFO и выше → breadcrumbs
-                event_level=logging.ERROR,  # ERROR и выше → Sentry event
+                level=logging.INFO,
+                event_level=logging.ERROR,
             ),
         ],
-        traces_sample_rate=0.2,  # 20% запросов для performance мониторинга
+        traces_sample_rate=0.2,
         profiles_sample_rate=0.1,
-        send_default_pii=False,  # не отправляем персональные данные
+        send_default_pii=False,
         environment=config("ENVIRONMENT", default="development"),
         release=config("APP_VERSION", default="1.0.0"),
     )
