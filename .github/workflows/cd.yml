@@ -37,8 +37,6 @@ jobs:
           file:       backend/Dockerfile
           push:       true
           tags:       ghcr.io/${{ github.repository }}/web:latest
-          cache-from: type=gha
-          cache-to:   type=gha,mode=max
 
       - name: Build and push bot image
         uses: docker/build-push-action@v5
@@ -47,8 +45,6 @@ jobs:
           file:       bot/Dockerfile
           push:       true
           tags:       ghcr.io/${{ github.repository }}/bot:latest
-          cache-from: type=gha
-          cache-to:   type=gha,mode=max
 
   deploy:
     name: Deploy to server
