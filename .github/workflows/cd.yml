@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build-and-push:
@@ -33,18 +33,18 @@ jobs:
       - name: Build and push web image
         uses: docker/build-push-action@v5
         with:
-          context:    .
-          file:       backend/Dockerfile
-          push:       true
-          tags:       ghcr.io/${{ github.repository }}/web:latest
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/web:latest
 
       - name: Build and push bot image
         uses: docker/build-push-action@v5
         with:
-          context:    .
-          file:       bot/Dockerfile
-          push:       true
-          tags:       ghcr.io/${{ github.repository }}/bot:latest
+          context: .
+          file: bot/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/bot:latest
 
   deploy:
     name: Deploy to server
@@ -57,28 +57,19 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
-          host:     ${{ secrets.SERVER_HOST }}
+          host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key:      ${{ secrets.SERVER_SSH_KEY }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/zhizn_bro
-
-            # Подтягиваем последние образы
-            docker-compose pull
-
-            # Перезапускаем сервисы
-            docker-compose up -d --build
-
-            # Применяем миграции
-            docker-compose exec -T web python manage.py migrate
-
-            # Собираем статику
-            docker-compose exec -T web python manage.py collectstatic --noinput
-
-            # Настраиваем периодические задачи
-            docker-compose exec -T web python manage.py setup_periodic_tasks
-
-            # Удаляем старые образы
+            git pull origin main
+            docker compose pull
+            docker compose up -d --build
+            docker compose exec -T web python manage.py migrate
+            docker compose exec -T web python manage.py collectstatic --noinput
+            docker compose exec -T web python manage.py upload_fakedata \
+              --users=0 --candidates=0 --events=0
+            docker compose exec -T web python manage.py setup_periodic_tasks
             docker image prune -f
 
             echo "✅ Деплой завершён: $(date)"
@@ -87,8 +78,8 @@ jobs:
         if: success()
         uses: appleboy/telegram-action@master
         with:
-          to:      ${{ secrets.ADMIN_TELEGRAM_ID }}
-          token:   ${{ secrets.BOT_TOKEN }}
+          to: ${{ secrets.ADMIN_TELEGRAM_ID }}
+          token: ${{ secrets.BOT_TOKEN }}
           message: |
             ✅ Деплой успешен!
             Ветка: ${{ github.ref_name }}
@@ -99,8 +90,8 @@ jobs:
         if: failure()
         uses: appleboy/telegram-action@master
         with:
-          to:      ${{ secrets.ADMIN_TELEGRAM_ID }}
-          token:   ${{ secrets.BOT_TOKEN }}
+          to: ${{ secrets.ADMIN_TELEGRAM_ID }}
+          token: ${{ secrets.BOT_TOKEN }}
           message: |
             ❌ Деплой провалился!
             Ветка: ${{ github.ref_name }}
