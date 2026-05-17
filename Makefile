@@ -1,11 +1,19 @@
-.PHONY: install run bot migrate test build up down logs shell celery celery-beat \
-        clean project_tree lint format check createsuperuser \
-        add_basic_sys_criteria clear_db fakedata setup_tasks health
+.PHONY: install run bot migrate test test-cov \
+        build up down logs restart shell \
+        celery celery-beat \
+        lint format check \
+        createsuperuser add_basic_sys_criteria \
+        fakedata clear_db setup_tasks health \
+        clean project_tree \
+        deploy deploy-init \
+        prod-logs prod-shell prod-migrate prod-createsuperuser
 
 # ── Переменные ────────────────────────────────────────────────────────────────
-PYTHON     = poetry run python
-MANAGE     = cd backend && $(PYTHON) manage.py
-LINT_DIRS  = bot backend tests
+PYTHON      = poetry run python
+MANAGE      = cd backend && $(PYTHON) manage.py
+LINT_DIRS   = bot backend tests
+DC          = docker compose
+DC_WEB      = $(DC) exec -T web python manage.py
 
 # ── Установка ─────────────────────────────────────────────────────────────────
 install:
@@ -70,42 +78,68 @@ celery:
 celery-beat:
 	cd backend && $(PYTHON) -m celery -A backend beat --loglevel=info
 
-# ── Docker ────────────────────────────────────────────────────────────────────
+# ── Docker (локальная разработка) ─────────────────────────────────────────────
 build:
-	docker-compose build
+	$(DC) build
 
 up:
-	docker-compose up -d
+	$(DC) up -d
 
 down:
-	docker-compose down
+	$(DC) down
 
 logs:
-	docker-compose logs -f
+	$(DC) logs -f
 
 restart:
-	docker-compose down && docker-compose up -d
+	$(DC) down && $(DC) up -d
 
-# ── Docker Prod ──────────────────────────────────────────────────────────────────
+# ── Продакшн деплой ───────────────────────────────────────────────────────────
+
+## Первый деплой на сервер (запускается один раз вручную)
+deploy-init:
+	$(DC) build
+	$(DC) up -d db redis
+	@echo "⏳ Ждём запуска БД..."
+	@sleep 10
+	$(DC_WEB) migrate
+	$(DC_WEB) createsuperuser
+	$(DC_WEB) collectstatic --noinput
+	$(DC_WEB) upload_fakedata --users=0 --candidates=0 --events=0
+	$(DC_WEB) setup_periodic_tasks
+	$(DC) up -d
+	@echo "✅ Первый деплой завершён!"
+
+## Обновление (запускается через GitHub Actions или вручную)
 deploy:
-	docker-compose pull
-	docker-compose up -d --build
-	docker-compose exec web python manage.py migrate
-	docker-compose exec web python manage.py collectstatic --noinput
-	docker-compose exec web python manage.py setup_periodic_tasks
+	git pull origin main
+	$(DC) up -d --build
+	$(DC_WEB) migrate
+	$(DC_WEB) collectstatic --noinput
+	$(DC_WEB) upload_fakedata --users=0 --candidates=0 --events=0
+	$(DC_WEB) setup_periodic_tasks
+	$(DC) image prune -f
 	@echo "✅ Деплой завершён!"
 
+# ── Продакшн утилиты ──────────────────────────────────────────────────────────
 prod-logs:
-	docker-compose logs -f web bot celery
+	$(DC) logs -f web bot celery
 
 prod-shell:
-	docker-compose exec web python manage.py shell
+	$(DC) exec web python manage.py shell
 
 prod-migrate:
-	docker-compose exec web python manage.py migrate
+	$(DC_WEB) migrate
 
 prod-createsuperuser:
-	docker-compose exec web python manage.py createsuperuser
+	$(DC) exec web python manage.py createsuperuser
+
+# ── Health check ──────────────────────────────────────────────────────────────
+health:
+	@echo "Проверка health check..."
+	@curl -s --max-time 5 http://localhost:8000/health/ | python -m json.tool \
+		&& echo "" \
+		|| echo "❌ Сервер недоступен. Запусти: make run"
 
 # ── Утилиты ───────────────────────────────────────────────────────────────────
 clean:
@@ -118,9 +152,3 @@ clean:
 
 project_tree:
 	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"
-
-health:
-	@echo "Проверка health check..."
-	@curl -s --max-time 5 http://localhost:8000/health/| python -m json.tool \
-		&& echo "" \
-		|| echo "❌ Сервер недоступен. Запусти: make run"
