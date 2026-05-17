@@ -112,6 +112,7 @@ deploy-init:
 
 ## Обновление (запускается через GitHub Actions или вручную)
 deploy:
+	$(DC) down
 	$(DC) up -d --build
 	$(DC_WEB) migrate
 	$(DC_WEB) collectstatic --noinput
