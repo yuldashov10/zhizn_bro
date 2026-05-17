@@ -117,7 +117,7 @@ deploy:
 	$(DC_WEB) collectstatic --noinput
 	$(DC_WEB) upload_fakedata --users=0 --candidates=0 --events=0
 	$(DC_WEB) setup_periodic_tasks
-	$(DC) image prune -f
+	docker image prune -f
 	@echo "✅ Деплой завершён!"
 
 # ── Продакшн утилиты ──────────────────────────────────────────────────────────
