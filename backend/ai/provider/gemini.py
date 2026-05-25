@@ -1,7 +1,7 @@
 import json
 import logging
 
-from ai.prompts.event_analysis import build_event_analysis_prompt
+from ai.prompts.event_analysis import EventAnalysisPrompt
 from ai.provider.base import (
     BaseAIProvider,
     CriterionScore,
@@ -36,12 +36,12 @@ class GeminiProvider(BaseAIProvider):
         hard_stops: list[str],
     ) -> EventAnalysisResult:
         """Анализирует событие через Gemini API."""
-        prompt = build_event_analysis_prompt(
+        prompt = EventAnalysisPrompt(
             raw_text=raw_text,
             user_context=user_context,
             criteria=criteria,
             hard_stops=hard_stops,
-        )
+        ).build()
 
         try:
             response = self._client.models.generate_content(

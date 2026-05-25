@@ -11,16 +11,18 @@ class CriterionScoreSchema(BaseModel):
     @field_validator("criterion_name")
     @classmethod
     def criterion_name_not_empty(cls, v: str) -> str:
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("Название критерия не может быть пустым")
-        return v.strip()
+        return v
 
     @field_validator("reasoning")
     @classmethod
     def reasoning_not_empty(cls, v: str) -> str:
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("Обоснование не может быть пустым")
-        return v.strip()
+        return v
 
 
 class EventAnalysisSchema(BaseModel):
@@ -49,6 +51,7 @@ class EventAnalysisSchema(BaseModel):
     @field_validator("interpretation")
     @classmethod
     def interpretation_not_empty(cls, v: str) -> str:
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("Интерпретация не может быть пустой")
-        return v.strip()
+        return v

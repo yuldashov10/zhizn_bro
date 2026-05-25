@@ -1,8 +1,7 @@
 import logging
 
-from ai.provider.base import BaseAIProvider, EventAnalysisResult
-from ai.provider.gemini import GeminiProvider
-from ai.provider.groq import GroqProvider
+from ai.provider.base import EventAnalysisResult
+from ai.provider.factory import AIProviderFactory
 from core.exceptions.base import ProviderError
 from decouple import config
 from django.db import models
@@ -11,21 +10,7 @@ from apps.criteria.models import Criterion, HardStop
 from apps.events.models import AIProviderLog, Event, EventCriterionScore
 from apps.users.models import User
 
-PROVIDERS: dict[str, type[BaseAIProvider]] = {
-    "gemini": GeminiProvider,
-    "groq": GroqProvider,
-}
-
 logger = logging.getLogger("ai")
-
-
-def get_provider() -> BaseAIProvider:
-    """Возвращает активный AI провайдер из настроек."""
-    provider_name = config("AI_PROVIDER", default="gemini")
-    provider_class = PROVIDERS.get(provider_name)
-    if not provider_class:
-        raise ProviderError(f"Неизвестный AI провайдер: {provider_name}")
-    return provider_class()
 
 
 class AIAnalysisService:
@@ -41,7 +26,7 @@ class AIAnalysisService:
         Сохраняет результат в БД и логирует токены.
         """
         user = event.candidate.user
-        provider = get_provider()
+        provider = AIProviderFactory.get_provider()
 
         user_context = cls._build_user_context(user)
         criteria = cls._get_active_criteria(user)
