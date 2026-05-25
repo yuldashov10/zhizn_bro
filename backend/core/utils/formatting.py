@@ -1,6 +1,10 @@
+from typing import Optional
+
+
 class ScoreFormatter:
     """
     Утилита форматирования скора для отображения пользователю.
+
     Используется в текстовых отчётах и боте.
     """
 
@@ -15,10 +19,10 @@ class ScoreFormatter:
         Строит визуальный прогресс-бар скора.
 
         Args:
-            score: скор от 0 до 100 или None если нет данных
+            score: скор от 0 до 100 или None если нет данных.
 
         Returns:
-            str: строка из эмодзи, например "🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜"
+            str: строка из эмодзи, например "🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜."
 
         Example:
             >>> ScoreFormatter.build_score_bar(50)
@@ -26,35 +30,36 @@ class ScoreFormatter:
         """
         if score is None:
             return ""
-        filled = round(score / cls.MAX_SCORE * cls.BAR_LENGTH)
+        clamped = max(0, min(score, cls.MAX_SCORE))
+        filled = round(clamped / cls.MAX_SCORE * cls.BAR_LENGTH)
         empty = cls.BAR_LENGTH - filled
         return f"{cls.FILLED_BLOCK * filled}{cls.EMPTY_BLOCK * empty}"
 
     @classmethod
-    def score_display(cls, score: int | None) -> str:
+    def score_display(cls, score: Optional[int]) -> str:
         """
         Форматирует скор для отображения.
 
         Args:
-            score: скор от 0 до 100 или None
+            score: скор от 0 до 100 или None.
 
         Returns:
-            str: "78/100" или "Нет данных"
+            str: "78/100" или "Нет данных".
         """
         if score is None:
             return "Нет данных"
         return f"{score}/{cls.MAX_SCORE}"
 
     @classmethod
-    def score_label(cls, score: int | None) -> str:
+    def score_label(cls, score: Optional[int]) -> str:
         """
         Возвращает текстовую метку скора.
 
         Args:
-            score: скор от 0 до 100 или None
+            score: скор от 0 до 100 или None.
 
         Returns:
-            str: "Отлично", "Хорошо", "Средне", "Плохо" или "—"
+            str: "Отлично", "Хорошо", "Средне", "Плохо" или "—".
         """
         if score is None:
             return "—"

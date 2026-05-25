@@ -1,17 +1,17 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
-from transliterate import translit
-from transliterate.exceptions import LanguageDetectionError
+from slugify import slugify
 
 
 class FileNameGenerator:
     """
     Генератор безопасных имён файлов.
-    Транслитерирует кириллицу, добавляет дату и UUID.
+
+    Транслитерирует название файла, добавляет дату и UUID.
     """
 
-    DATE_FORMAT = "%d%m%Y%H%M%S"
+    _DATE_FORMAT: str = "%d%m%Y%H%M%S"
 
     @classmethod
     def generate(
@@ -24,9 +24,9 @@ class FileNameGenerator:
         Генерирует безопасное имя файла.
 
         Args:
-            name:       исходное имя (может содержать кириллицу)
+            name:       исходное имя (может содержать любой символ)
             extension:  расширение файла без точки (pdf, xlsx, png)
-            uid_length: длина UUID суффикса
+            uid_length: длина UUID суффикса (по умолчанию 8)
 
         Returns:
             str: безопасное имя файла вида name_ddmmyyyyHHMMSS_uuid.ext
@@ -38,33 +38,19 @@ class FileNameGenerator:
         safe_name = cls._transliterate(name)
         date_str = cls._date_string()
         uid = cls._uid(uid_length)
-        ext = extension.lstrip(".")
+        ext = extension.removeprefix(".")
 
         return f"{safe_name}_{date_str}_{uid}.{ext}"
 
     @classmethod
     def _transliterate(cls, name: str) -> str:
-        """Транслитерирует кириллицу в латиницу и очищает строку."""
-        try:
-            latin = translit(name, "ru", reversed=True)
-        except (LanguageDetectionError, Exception):
-            latin = name
-
-        # Оставляем только безопасные символы
-        safe = "".join(
-            c for c in latin if c.isalnum() or c in (" ", "_", "-")
-        ).strip()
-
-        # Заменяем пробелы и приводим к нижнему регистру
-        safe = safe.replace(" ", "_").lower()
-
-        # Если строка пустая — используем fallback
-        return safe or "file"
+        """Транслитерирует название файла в латиницу."""
+        return slugify(name, separator="_") or "file"
 
     @classmethod
     def _date_string(cls) -> str:
         """Возвращает текущую дату и время в формате ddmmyyyyHHMMSS."""
-        return datetime.now().strftime(cls.DATE_FORMAT)
+        return datetime.now(tz=timezone.utc).strftime(cls._DATE_FORMAT)
 
     @classmethod
     def _uid(cls, length: int = 8) -> str:
