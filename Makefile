@@ -152,3 +152,6 @@ clean:
 
 project_tree:
 	tree -a -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov"
+
+project_tree_short:
+	tree -a -L 2 -I ".venv|.git|.vscode|.idea|node_modules|migrations|.mypy_cache|__pycache__|htmlcov|*.pyc|*.log|*.sqlite3|media|static|templates|logs|.pytest_cache|.coverage|.DS_Store"

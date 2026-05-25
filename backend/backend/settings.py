@@ -278,7 +278,13 @@ CONSTANCE_CONFIG = {
         "Час запуска ежедневной очистки старых отчётов (0-23, UTC).",
         int,
     ),
-    # Токены
+    # AI
+    "AI_PROVIDER": (
+        "groq",
+        "Активный ИИ-провайдер (groq, gemini, claude, openai).",
+        str,
+    ),
+    # AI Токены
     "AI_DAILY_TOKEN_LIMIT_FREE": (
         10_000,
         "Дневной лимит токенов для бесплатного тарифа.",
@@ -322,7 +328,8 @@ CONSTANCE_CONFIG_FIELDSETS = {
         "WEEKLY_REPORTS_DAY",
         "CLEANUP_HOUR",
     ),
-    "Токены": (
+    "ИИ": (
+        "AI_PROVIDER",
         "AI_DAILY_TOKEN_LIMIT_FREE",
         "AI_MONTHLY_TOKEN_LIMIT_FREE",
     ),
