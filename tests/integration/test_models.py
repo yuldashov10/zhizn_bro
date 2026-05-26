@@ -15,6 +15,7 @@ from apps.criteria.models import Criterion, HardStop
 from apps.events.models import AIProviderLog, Event, EventCriterionScore
 from apps.reports.models import ReportLog
 from apps.users.models import User, UserProfile, UserTokenLimit
+from core.choices import AttachmentType
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ class TestUserCascade:
         """Удаление пользователя удаляет профиль."""
         UserProfile.objects.create(
             user=user,
-            attachment_type=UserProfile.AttachmentType.SECURE,
+            attachment_type=AttachmentType.SECURE,
             attachment_source=UserProfile.AttachmentSource.BOT_TEST,
         )
         user_id = user.pk
@@ -182,7 +183,7 @@ class TestAssessmentCascade:
         session = UserTestSession.objects.create(
             user=user,
             test=test,
-            result_type=UserTestSession.AttachmentResult.SECURE,
+            result_type=AttachmentType.SECURE,
         )
         UserAnswer.objects.create(
             session=session,

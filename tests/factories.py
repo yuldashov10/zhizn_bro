@@ -8,6 +8,7 @@ from apps.criteria.models import Criterion, HardStop
 from apps.events.models import Event, EventCriterionScore
 from apps.reports.models import ReportLog
 from apps.users.models import UserProfile, UserTokenLimit
+from core.choices import AttachmentType
 
 User = get_user_model()
 
@@ -30,7 +31,7 @@ class UserProfileFactory(DjangoModelFactory):
         model = UserProfile
 
     user = factory.SubFactory(UserFactory)
-    attachment_type = UserProfile.AttachmentType.SECURE
+    attachment_type = AttachmentType.SECURE
     attachment_source = UserProfile.AttachmentSource.BOT_TEST
     correction_coefficient = 1.0
 

@@ -1,6 +1,7 @@
 import pytest
 
 from apps.users.models import User, UserProfile, UserTokenLimit
+from core.choices import AttachmentType
 
 
 @pytest.fixture
@@ -26,7 +27,7 @@ def token_limit(user):
 def profile(user):
     return UserProfile.objects.create(
         user=user,
-        attachment_type=UserProfile.AttachmentType.SECURE,
+        attachment_type=AttachmentType.SECURE,
         attachment_source=UserProfile.AttachmentSource.BOT_TEST,
         correction_coefficient=1.0,
     )
@@ -79,8 +80,8 @@ class TestUserProfile:
 
     def test_attachment_type_choices(self, profile):
         assert profile.attachment_type in [
-            UserProfile.AttachmentType.SECURE,
-            UserProfile.AttachmentType.ANXIOUS,
-            UserProfile.AttachmentType.AVOIDANT,
-            UserProfile.AttachmentType.DISORGANIZED,
+            AttachmentType.SECURE,
+            AttachmentType.ANXIOUS,
+            AttachmentType.AVOIDANT,
+            AttachmentType.DISORGANIZED,
         ]
