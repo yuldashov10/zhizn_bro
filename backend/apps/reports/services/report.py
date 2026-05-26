@@ -1,6 +1,5 @@
 import logging
 
-from core.utils import FileNameGenerator
 from django.core.files.base import ContentFile
 
 from apps.candidates.models import Candidate
@@ -9,6 +8,7 @@ from apps.reports.services.excel import generate_excel
 from apps.reports.services.pdf import generate_pdf
 from apps.reports.services.png import generate_png
 from apps.reports.services.text_report import TextReportBuilder
+from core.utils import FileNameGenerator
 
 logger = logging.getLogger("apps.reports")
 

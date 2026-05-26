@@ -8,9 +8,10 @@ from ai.provider.base import (
     EventAnalysisResult,
 )
 from ai.schemas.responses import EventAnalysisSchema
-from core.exceptions.base import ProviderError
 from decouple import config
 from groq import Groq
+
+from core.exceptions.base import ProviderError
 
 logger = logging.getLogger("ai")
 

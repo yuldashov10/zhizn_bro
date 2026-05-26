@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 ]
 
 PROJECT_APPS = [
+    "core",
     "apps.users",
     "apps.assessments",
     "apps.criteria",

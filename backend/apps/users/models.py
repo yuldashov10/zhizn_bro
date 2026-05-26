@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .managers import UserManager
+from core.choices import AttachmentType
 
 
 class User(AbstractUser):
@@ -53,15 +54,10 @@ class UserProfile(models.Model):
     Хранит тип привязанности и поправочный коэффициент для скоринга.
     """
 
-    class AttachmentType(models.TextChoices):
-        SECURE = "secure", "Надёжный"
-        ANXIOUS = "anxious", "Тревожный"
-        AVOIDANT = "avoidant", "Избегающий"
-        DISORGANIZED = "disorganized", "Дезорганизованный"
-
     class AttachmentSource(models.TextChoices):
         BOT_TEST = "bot_test", "Тест в боте"
         USER_DEFINED = "user_defined", "Указан вручную"
+        AI_INFERRED = "ai_inferred", "Определён ИИ по событиям"
 
     user = models.OneToOneField(
         User,

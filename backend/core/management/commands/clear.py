@@ -14,7 +14,7 @@ class Command(BaseCommand):
     Суперпользователи не удаляются.
     """
 
-    help = "Очистить БД от тестовых данных"
+    help = "Очистить БД от тестовых данных (seed-данные сохраняются)"
 
     def add_arguments(self, parser):
         parser.add_argument(

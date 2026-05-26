@@ -2,8 +2,7 @@
         build up down logs restart shell \
         celery celery-beat \
         lint format check \
-        createsuperuser add_basic_sys_criteria \
-        fakedata clear_db setup_tasks health \
+        createsuperuser seed fakedata clear_db setup_tasks health \
         clean project_tree \
         deploy deploy-init \
         prod-logs prod-shell prod-migrate prod-createsuperuser
@@ -37,14 +36,14 @@ migrate:
 	$(MANAGE) makemigrations
 	$(MANAGE) migrate
 
-add_basic_sys_criteria:
-	$(MANAGE) upload_fakedata --users=0 --candidates=0 --events=0
+seed:
+	$(MANAGE) seed
 
 fakedata:
-	$(MANAGE) upload_fakedata
+	$(MANAGE) fake
 
 clear_db:
-	$(MANAGE) clear_fakedata --confirm
+	$(MANAGE) clear --confirm
 
 setup_tasks:
 	$(MANAGE) setup_periodic_tasks
@@ -105,7 +104,7 @@ deploy-init:
 	$(DC_WEB) migrate
 	$(DC_WEB) createsuperuser
 	$(DC_WEB) collectstatic --noinput
-	$(DC_WEB) upload_fakedata --users=0 --candidates=0 --events=0
+	$(DC_WEB) seed
 	$(DC_WEB) setup_periodic_tasks
 	$(DC) up -d
 	@echo "✅ Первый деплой завершён!"
@@ -116,7 +115,7 @@ deploy:
 	$(DC) up -d --build
 	$(DC_WEB) migrate
 	$(DC_WEB) collectstatic --noinput
-	$(DC_WEB) upload_fakedata --users=0 --candidates=0 --events=0
+	$(DC_WEB) seed
 	$(DC_WEB) setup_periodic_tasks
 	docker image prune -f
 	@echo "✅ Деплой завершён!"

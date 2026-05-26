@@ -2,6 +2,7 @@ from django.db import models
 
 from apps.criteria.models import HardStop
 from apps.users.models import User
+from core.choices import AttachmentType
 
 
 class Candidate(models.Model):
@@ -9,12 +10,6 @@ class Candidate(models.Model):
     Кандидат в партнёры — девушка которую оценивает пользователь.
     Тип привязанности определяется ИИ автоматически на основе событий.
     """
-
-    class AttachmentType(models.TextChoices):
-        SECURE = "secure", "Надёжный"
-        ANXIOUS = "anxious", "Тревожный"
-        AVOIDANT = "avoidant", "Избегающий"
-        DISORGANIZED = "disorganized", "Дезорганизованный"
 
     user = models.ForeignKey(
         User,
@@ -109,6 +104,11 @@ class CandidateStatusHistory(models.Model):
     started_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Дата установки статуса",
+    )
+    ended_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Дата завершения статуса",
     )
     note = models.TextField(
         blank=True,

@@ -22,7 +22,10 @@ class ScoringService:
     def calculate(cls, candidate: Candidate) -> int | None:
         """
         Рассчитывает итоговый взвешенный скор кандидата.
-        Возвращает None если нет подтверждённых событий.
+        Возвращает None если нет событий с оценками.
+
+        Поправочный коэффициент из UserProfile применяется
+        к нормализованному скору и отражает тип привязанности пользователя.
         """
         scores = cls._get_scores(candidate)
         if not scores:
@@ -33,7 +36,8 @@ class ScoringService:
             return None
 
         weighted_sum = cls._calculate_weighted_sum(criterion_averages)
-        return cls._normalize(weighted_sum)
+        normalized = cls._normalize(weighted_sum)
+        return cls._apply_coefficient(candidate, normalized)
 
     @classmethod
     def _get_scores(cls, candidate: Candidate) -> list[EventCriterionScore]:
@@ -93,3 +97,18 @@ class ScoringService:
             weighted_sum / cls.MAX_SCORE
         ) * cls.NORMALIZED_MID + cls.NORMALIZED_MID
         return int(max(0, min(100, round(normalized))))
+
+    @classmethod
+    def _apply_coefficient(cls, candidate: Candidate, score: int) -> int:
+        """
+        Применяет поправочный коэффициент из профиля пользователя.
+        Коэффициент < 1.0 занижает скор (пользователь склонен переоценивать),
+        коэффициент > 1.0 завышает (пользователь склонен недооценивать).
+        Результат зажат в диапазон 0–100.
+        """
+        try:
+            coefficient = candidate.user.profile.correction_coefficient
+        except Exception:
+            return score
+
+        return int(max(0, min(100, round(score * coefficient))))

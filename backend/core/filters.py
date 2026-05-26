@@ -3,6 +3,7 @@ import django_filters
 from apps.candidates.models import Candidate
 from apps.events.models import Event
 from apps.reports.models import ReportLog
+from core.choices import AttachmentType
 
 
 class CandidateFilter(django_filters.FilterSet):
@@ -11,7 +12,7 @@ class CandidateFilter(django_filters.FilterSet):
     is_active = django_filters.BooleanFilter()
     hard_stop_triggered = django_filters.BooleanFilter()
     ai_attachment_type = django_filters.ChoiceFilter(
-        choices=Candidate.AttachmentType.choices,
+        choices=AttachmentType.choices,
     )
     created_after = django_filters.DateTimeFilter(
         field_name="created_at",

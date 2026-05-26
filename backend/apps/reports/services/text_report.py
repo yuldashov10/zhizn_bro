@@ -1,6 +1,7 @@
 import logging
 
 from constance import config
+
 from core.utils import ScoreFormatter
 
 logger = logging.getLogger("apps.reports")

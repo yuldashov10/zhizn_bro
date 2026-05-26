@@ -1,5 +1,3 @@
-from core.filters import ReportFilter
-from core.pagination import SmallPagination
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.request import Request
@@ -14,6 +12,8 @@ from apps.candidates.models import Candidate
 from apps.reports.models import ReportLog
 from apps.reports.services.report import ReportService
 from apps.reports.tasks import generate_report_task
+from core.filters import ReportFilter
+from core.pagination import SmallPagination
 
 
 class ReportListView(APIView):

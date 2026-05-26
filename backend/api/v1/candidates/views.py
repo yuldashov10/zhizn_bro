@@ -1,5 +1,3 @@
-from core.filters import CandidateFilter
-from core.pagination import StandardPagination
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -18,6 +16,8 @@ from api.v1.candidates.serializers import (
 from apps.candidates.models import Candidate, CandidateStatusHistory
 from apps.events.models import Event
 from apps.events.services import ScoringService
+from core.filters import CandidateFilter
+from core.pagination import StandardPagination
 
 
 class CandidateListView(APIView):

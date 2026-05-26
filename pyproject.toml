@@ -121,6 +121,7 @@ known_local_folder = [
     "apps",
     "api",
     "bot",
+    "core",
 ]
 
 [tool.pytest.ini_options]

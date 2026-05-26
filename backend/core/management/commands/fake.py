@@ -5,7 +5,6 @@ from faker import Faker
 
 from apps.assessments.models import (
     AttachmentTest,
-    Question,
     UserAnswer,
     UserTestSession,
 )
@@ -18,6 +17,7 @@ from apps.criteria.models import Criterion, HardStop
 from apps.events.models import AIProviderLog, Event, EventCriterionScore
 from apps.reports.models import ReportLog
 from apps.users.models import User, UserProfile, UserTokenLimit
+from core.choices import AttachmentType
 
 fake = Faker("ru_RU")
 
@@ -25,10 +25,32 @@ fake = Faker("ru_RU")
 class Command(BaseCommand):
     """
     Заполняет БД случайными тестовыми данными.
-    Создаёт пользователей, кандидатов, события и всё связанное.
+    Автоматически вызывает seed если базовых данных нет.
+    Только для dev окружения.
     """
 
-    help = "Заполнить БД тестовыми данными"
+    help = "Заполнить БД случайными тестовыми данными (только dev)"
+
+    def handle(self, *args, **options):
+        self.stdout.write("Начинаем заполнение БД тестовыми данными...")
+
+        self._ensure_seed_data()
+        users = self._create_users(options["users"])
+        self._create_candidates(
+            users, options["candidates"], options["events"]
+        )
+
+        self.stdout.write(self.style.SUCCESS("БД успешно заполнена!"))
+
+    def _ensure_seed_data(self) -> None:
+        """Запускает seed если базовых данных ещё нет."""
+        if not HardStop.objects.filter(is_default=True).exists():
+            self.stdout.write(
+                "  → Базовые данные не найдены, запускаем seed..."
+            )
+            from django.core.management import call_command
+
+            call_command("seed", verbosity=0)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -50,123 +72,15 @@ class Command(BaseCommand):
             help="Количество событий на кандидата (default: 5)",
         )
 
-    def handle(self, *args, **options):
-        self.stdout.write("Начинаем заполнение БД...")
-
-        self._create_system_data()
-        users = self._create_users(options["users"])
-        self._create_candidates(
-            users, options["candidates"], options["events"]
-        )
-
-        self.stdout.write(self.style.SUCCESS("БД успешно заполнена!"))
-
-    def _create_system_data(self) -> None:
-        """Создаёт системные Hard Stops и критерии."""
-        self.stdout.write("  → Системные данные...")
-
-        hard_stops = [
-            (
-                "Ложь / обман",
-                "Нулевая терпимость. Любой зафиксированный обман — выход.",
-            ),
-            ("Разведена с детьми", "Наличие детей от предыдущих отношений."),
-            ("Разведена без детей", "Был официальный брак без детей."),
-            ("Курение", "Абсолютный маркер несовместимости."),
-            (
-                "Алкоголь / психотропные вещества",
-                "Любое систематическое употребление.",
-            ),
-            ("Эзотерика / астрология", "Маркер отключённой Системы 2."),
-            (
-                "Дезорганизованный тип привязанности",
-                "Неуправляемый шум в отношениях.",
-            ),
-        ]
-        for name, description in hard_stops:
-            HardStop.objects.get_or_create(
-                name=name,
-                defaults={
-                    "description": description,
-                    "is_default": True,
-                    "is_active": True,
-                },
-            )
-
-        criteria = [
-            (
-                "Доверие",
-                0.30,
-                "Честность, выполнение обещаний, отсутствие лжи",
-            ),
-            (
-                "Эмоц. стабильность",
-                0.25,
-                "Адекватность реакций, отсутствие манипуляций",
-            ),
-            (
-                "Уважение",
-                0.20,
-                "Отношение к времени, мнению, границам партнёра",
-            ),
-            (
-                "Открытость",
-                0.15,
-                "Готовность к серьёзным разговорам, честность о себе",
-            ),
-            ("Интеллект", 0.10, "Критическое мышление, адекватность суждений"),
-        ]
-        for name, weight, description in criteria:
-            Criterion.objects.get_or_create(
-                name=name,
-                defaults={
-                    "weight": weight,
-                    "description": description,
-                    "is_default": True,
-                    "is_active": True,
-                },
-            )
-
-        # Тест привязанности
-        test, _ = AttachmentTest.objects.get_or_create(
-            name="Краткий тест привязанности",
-            defaults={
-                "description": (
-                    "Краткий тест для " "определения типа привязанности"
-                ),
-                "is_validated": False,
-                "is_active": True,
-            },
-        )
-        questions = [
-            ("Мне легко сближаться с людьми", "anxiety"),
-            ("Я беспокоюсь что партнёр меня бросит", "anxiety"),
-            ("Я предпочитаю не зависеть от других", "avoidance"),
-            ("Мне некомфортно когда партнёр слишком близко", "avoidance"),
-            ("Я легко доверяю партнёру", "anxiety"),
-        ]
-        for i, (text, dimension) in enumerate(questions, 1):
-            Question.objects.get_or_create(
-                test=test,
-                order=i,
-                defaults={
-                    "text": text,
-                    "dimension": dimension,
-                    "weight": 1.0,
-                },
-            )
-        test.questions_count = test.questions.count()
-        test.save(update_fields=["questions_count"])
-
     def _create_users(self, count: int) -> list[User]:
         """Создаёт тестовых пользователей с профилями и лимитами."""
         self.stdout.write(f"  → Пользователи ({count} шт.)...")
 
         users = []
         attachment_types = [
-            UserProfile.AttachmentType.SECURE,
-            UserProfile.AttachmentType.ANXIOUS,
-            UserProfile.AttachmentType.AVOIDANT,
+            AttachmentType.SECURE,
+            AttachmentType.ANXIOUS,
+            AttachmentType.AVOIDANT,
         ]
         for _ in range(count):
             telegram_id = random.randint(100_000_000, 999_999_999)
@@ -220,9 +134,9 @@ class Command(BaseCommand):
                     is_active=random.choice([True, True, True, False]),
                     ai_attachment_type=random.choice(
                         [
-                            Candidate.AttachmentType.SECURE,
-                            Candidate.AttachmentType.ANXIOUS,
-                            Candidate.AttachmentType.AVOIDANT,
+                            AttachmentType.SECURE,
+                            AttachmentType.ANXIOUS,
+                            AttachmentType.AVOIDANT,
                         ]
                     ),
                 )
@@ -257,9 +171,9 @@ class Command(BaseCommand):
                         test=test,
                         result_type=random.choice(
                             [
-                                UserTestSession.AttachmentResult.SECURE,
-                                UserTestSession.AttachmentResult.ANXIOUS,
-                                UserTestSession.AttachmentResult.AVOIDANT,
+                                AttachmentType.SECURE,
+                                AttachmentType.ANXIOUS,
+                                AttachmentType.AVOIDANT,
                             ]
                         ),
                     )

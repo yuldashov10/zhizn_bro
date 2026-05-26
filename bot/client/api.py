@@ -1,8 +1,9 @@
 import logging
 
 import httpx
-from core.exceptions.base import BROBaseException
 from decouple import config
+
+from core.exceptions.base import BROBaseException
 
 logger = logging.getLogger("bot")
 

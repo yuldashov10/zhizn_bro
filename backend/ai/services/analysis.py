@@ -2,13 +2,13 @@ import logging
 
 from ai.provider.base import EventAnalysisResult
 from ai.provider.factory import AIProviderFactory
-from core.exceptions.base import ProviderError
 from decouple import config
 from django.db import models
 
 from apps.criteria.models import Criterion, HardStop
 from apps.events.models import AIProviderLog, Event, EventCriterionScore
 from apps.users.models import User
+from core.exceptions.base import ProviderError
 
 logger = logging.getLogger("ai")
 

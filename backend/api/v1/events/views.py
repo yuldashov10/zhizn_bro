@@ -1,8 +1,4 @@
 from ai import AIAnalysisService
-from core.exceptions.base import ProviderError
-from core.filters import EventFilter
-from core.pagination import StandardPagination
-from core.throttling import AIRateThrottle
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.request import Request
@@ -17,6 +13,10 @@ from api.v1.events.serializers import (
 )
 from apps.candidates.models import Candidate
 from apps.events.models import Event, EventCriterionScore
+from core.exceptions.base import ProviderError
+from core.filters import EventFilter
+from core.pagination import StandardPagination
+from core.throttling import AIRateThrottle
 
 
 class EventListView(APIView):

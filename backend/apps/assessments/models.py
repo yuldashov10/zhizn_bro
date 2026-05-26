@@ -2,6 +2,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from apps.users.models import User
+from core.choices import AttachmentType
 
 
 class AttachmentTest(models.Model):
@@ -35,7 +36,7 @@ class AttachmentTest(models.Model):
     class Meta:
         verbose_name = "Тест привязанности"
         verbose_name_plural = "Тесты привязанности"
-        ordering = ["-is_validated", "name"]
+        ordering = ("-is_validated", "name")
 
     def __str__(self) -> str:
         return self.name
@@ -78,7 +79,7 @@ class Question(models.Model):
     class Meta:
         verbose_name = "Вопрос"
         verbose_name_plural = "Вопросы"
-        ordering = ["test", "order"]
+        ordering = ("test", "order")
 
     def __str__(self) -> str:
         return f"[{self.test}] #{self.order} {self.text[:50]}"
@@ -89,12 +90,6 @@ class UserTestSession(models.Model):
     Сессия прохождения теста пользователем.
     Хранит итоговый тип привязанности после завершения теста.
     """
-
-    class AttachmentResult(models.TextChoices):
-        SECURE = "secure", "Надёжный"
-        ANXIOUS = "anxious", "Тревожный"
-        AVOIDANT = "avoidant", "Избегающий"
-        DISORGANIZED = "disorganized", "Дезорганизованный"
 
     user = models.ForeignKey(
         User,
@@ -110,7 +105,7 @@ class UserTestSession(models.Model):
     )
     result_type = models.CharField(
         max_length=20,
-        choices=AttachmentResult.choices,
+        choices=AttachmentType.choices,
         blank=True,
         null=True,
         verbose_name="Результат теста",
@@ -124,7 +119,7 @@ class UserTestSession(models.Model):
     class Meta:
         verbose_name = "Сессия теста"
         verbose_name_plural = "Сессии тестов"
-        ordering = ["-completed_at"]
+        ordering = ("-completed_at",)
 
     def __str__(self) -> str:
         return f"{self.user} → {self.test} [{self.result_type}]"
