@@ -103,6 +103,8 @@ class EventCriterionScore(models.Model):
             self.user_score if self.user_score is not None else self.ai_score
         )
 
+    final_score.fget.short_description = "Итоговый балл"
+
 
 class AIProviderLog(models.Model):
     """

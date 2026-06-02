@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import AIProviderLog, Event, EventCriterionScore
+from core.utils import truncate
 
 
 class EventCriterionScoreInline(admin.TabularInline):
@@ -17,11 +18,6 @@ class EventCriterionScoreInline(admin.TabularInline):
         "final_score",
     ]
 
-    @admin.display(description="Итоговый балл")
-    def final_score(self, obj: EventCriterionScore) -> int:
-        """Показывает итоговый балл с учётом корректировки пользователя."""
-        return obj.final_score
-
 
 class AIProviderLogInline(admin.TabularInline):
     """Логи AI провайдера внутри карточки события."""
@@ -35,17 +31,18 @@ class AIProviderLogInline(admin.TabularInline):
         "created_at",
         "prompt_preview",
     ]
+    list_select_related = ["event", "event__candidate"]
     fields = [
         "provider",
         "tokens_used",
         "created_at",
         "prompt_preview",
     ]
+    date_hierarchy = "created_at"
 
     @admin.display(description="Промпт")
     def prompt_preview(self, obj: AIProviderLog) -> str:
-        """Показывает первые 60 символов промпта."""
-        return obj.prompt[:60] + "..." if len(obj.prompt) > 60 else obj.prompt
+        return truncate(obj.prompt)
 
 
 @admin.register(Event)
@@ -62,6 +59,7 @@ class EventAdmin(admin.ModelAdmin):
         "scores_count",
         "created_at",
     ]
+    list_select_related = ["candidate", "candidate__user"]
     list_filter = [
         "is_hard_stop",
         "candidate__user",
@@ -79,6 +77,7 @@ class EventAdmin(admin.ModelAdmin):
         "created_at",
     ]
     ordering = ["-created_at"]
+    date_hierarchy = "created_at"
     fieldsets = [
         (
             "Событие",
@@ -106,11 +105,7 @@ class EventAdmin(admin.ModelAdmin):
     @admin.display(description="Текст события")
     def raw_text_preview(self, obj: Event) -> str:
         """Показывает первые 60 символов текста события."""
-        return (
-            obj.raw_text[:60] + "..."
-            if len(obj.raw_text) > 60
-            else obj.raw_text
-        )
+        return truncate(obj.raw_text)
 
     @admin.display(description="Искажение", boolean=True)
     def has_bias_warning(self, obj: Event) -> bool:
@@ -135,6 +130,7 @@ class EventCriterionScoreAdmin(admin.ModelAdmin):
         "final_score",
         "is_confirmed",
     ]
+    list_select_related = ["event", "event__candidate", "criterion"]
     list_filter = [
         "is_confirmed",
         "criterion",
@@ -145,11 +141,6 @@ class EventCriterionScoreAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["ai_score"]
     ordering = ["event", "criterion"]
-
-    @admin.display(description="Итоговый балл")
-    def final_score(self, obj: EventCriterionScore) -> int:
-        """Показывает итоговый балл с учётом корректировки пользователя."""
-        return obj.final_score
 
 
 @admin.register(AIProviderLog)

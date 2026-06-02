@@ -1,5 +1,7 @@
 from typing import Optional
 
+PREVIEW_LEN: int = 60
+
 
 class ScoreFormatter:
     """
@@ -71,3 +73,10 @@ class ScoreFormatter:
             return "Средне 🟠"
         else:
             return "Плохо 🔴"
+
+
+def truncate(text: str | None, length: int = PREVIEW_LEN) -> str:
+    """Усекает текст до заданной длины с добавлением многоточия."""
+    if not text:
+        return "—"
+    return text[:length] + "..." if len(text) > length else text

@@ -7,10 +7,12 @@ from apps.criteria.models import (
     UserCriterionSettings,
     UserHardStopSettings,
 )
+from core.mixins import SystemObjectReadonlyMixin
+from core.utils import truncate
 
 
 @admin.register(HardStop)
-class HardStopAdmin(admin.ModelAdmin):
+class HardStopAdmin(SystemObjectReadonlyMixin, admin.ModelAdmin):
     """Hard Stops — абсолютные фильтры."""
 
     list_display = [
@@ -19,6 +21,7 @@ class HardStopAdmin(admin.ModelAdmin):
         "is_active",
         "user",
     ]
+    list_select_related = ["user"]
     list_filter = [
         "is_default",
         "is_active",
@@ -32,18 +35,9 @@ class HardStopAdmin(admin.ModelAdmin):
     ordering = ["-is_default", "name"]
     readonly_fields = ["user"]
 
-    def get_readonly_fields(self, request, obj=None):
-        """
-        Системные Hard Stops нельзя редактировать.
-        Поле user доступно только при создании пользовательского.
-        """
-        if obj and obj.is_default:
-            return [f.name for f in self.model._meta.fields]
-        return self.readonly_fields
-
 
 @admin.register(Criterion)
-class CriterionAdmin(admin.ModelAdmin):
+class CriterionAdmin(SystemObjectReadonlyMixin, admin.ModelAdmin):
     """Критерии оценки кандидата."""
 
     list_display = [
@@ -53,6 +47,7 @@ class CriterionAdmin(admin.ModelAdmin):
         "is_active",
         "user",
     ]
+    list_select_related = ["user"]
     list_filter = [
         "is_default",
         "is_active",
@@ -65,12 +60,6 @@ class CriterionAdmin(admin.ModelAdmin):
     ]
     ordering = ["-is_default", "-weight"]
     readonly_fields = ["user"]
-
-    def get_readonly_fields(self, request, obj=None):
-        """Системные критерии нельзя редактировать."""
-        if obj and obj.is_default:
-            return [f.name for f in self.model._meta.fields]
-        return self.readonly_fields
 
     @admin.display(description="Вес")
     def weight_display(self, obj: Criterion) -> str:
@@ -88,6 +77,7 @@ class HardStopSuggestionAdmin(admin.ModelAdmin):
         "status",
         "created_at",
     ]
+    list_select_related = ["user"]
     list_filter = ["status"]
     search_fields = [
         "user__telegram_id",
@@ -96,11 +86,12 @@ class HardStopSuggestionAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["user", "text", "created_at"]
     ordering = ["-created_at"]
+    date_hierarchy = "created_at"
     actions = ["approve_suggestions", "reject_suggestions"]
 
     @admin.display(description="Предложение")
     def text_preview(self, obj: HardStopSuggestion) -> str:
-        return obj.text[:60] + "..." if len(obj.text) > 60 else obj.text
+        return truncate(obj.text)
 
     @admin.action(description="Одобрить выбранные")
     def approve_suggestions(self, request, queryset):
@@ -116,6 +107,7 @@ class UserHardStopSettingsAdmin(admin.ModelAdmin):
     """Настройки Hard Stops пользователей."""
 
     list_display = ["user", "hard_stop", "is_active"]
+    list_select_related = ["user", "hard_stop"]
     list_filter = ["is_active"]
     search_fields = [
         "user__telegram_id",
@@ -130,6 +122,7 @@ class UserCriterionSettingsAdmin(admin.ModelAdmin):
     """Настройки критериев пользователей."""
 
     list_display = ["user", "criterion", "is_active"]
+    list_select_related = ["user", "criterion"]
     list_filter = ["is_active"]
     search_fields = [
         "user__telegram_id",

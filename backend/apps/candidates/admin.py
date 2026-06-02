@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import Candidate, CandidateHardStopLog, CandidateStatusHistory
+from core.utils import truncate
 
 
 class CandidateStatusHistoryInline(admin.TabularInline):
@@ -45,6 +46,7 @@ class CandidateAdmin(admin.ModelAdmin):
         "hard_stop_triggered",
         "ai_attachment_type",
     ]
+    list_select_related = ["user"]
     search_fields = [
         "name",
         "user__telegram_id",
@@ -56,6 +58,7 @@ class CandidateAdmin(admin.ModelAdmin):
         "ai_attachment_type",
     ]
     ordering = ["-created_at"]
+    date_hierarchy = "created_at"
     fieldsets = [
         (
             "Основное",
@@ -93,6 +96,7 @@ class CandidateStatusHistoryAdmin(admin.ModelAdmin):
         "started_at",
         "note_preview",
     ]
+    list_select_related = ["candidate", "candidate__user"]
     list_filter = ["status"]
     search_fields = [
         "candidate__name",
@@ -103,10 +107,7 @@ class CandidateStatusHistoryAdmin(admin.ModelAdmin):
 
     @admin.display(description="Причина")
     def note_preview(self, obj: CandidateStatusHistory) -> str:
-        """Показывает первые 60 символов причины смены статуса."""
-        if not obj.note:
-            return "—"
-        return obj.note[:60] + "..." if len(obj.note) > 60 else obj.note
+        return truncate(obj.note)
 
 
 @admin.register(CandidateHardStopLog)
@@ -119,6 +120,7 @@ class CandidateHardStopLogAdmin(admin.ModelAdmin):
         "triggered_at",
         "note_preview",
     ]
+    list_select_related = ["candidate", "candidate__user", "hard_stop"]
     list_filter = ["hard_stop"]
     search_fields = [
         "candidate__name",
@@ -127,10 +129,8 @@ class CandidateHardStopLogAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["triggered_at"]
     ordering = ["-triggered_at"]
+    date_hierarchy = "triggered_at"
 
     @admin.display(description="Описание события")
     def note_preview(self, obj: CandidateHardStopLog) -> str:
-        """Показывает первые 60 символов описания события-триггера."""
-        if not obj.note:
-            return "—"
-        return obj.note[:60] + "..." if len(obj.note) > 60 else obj.note
+        return truncate(obj.note)
